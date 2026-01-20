@@ -1,4 +1,4 @@
-// SeatGeek BTS Concert Simulator
+// BTS Concert Ticket Simulator
 // Main Application Logic
 
 // State Management
@@ -94,7 +94,7 @@ const availabilityConfig = {
 
 // Load saved stats from localStorage
 function loadGameStats() {
-  const saved = localStorage.getItem('seatgeek_sim_stats');
+  const saved = localStorage.getItem('bts_sim_stats');
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
@@ -103,7 +103,7 @@ function loadGameStats() {
       console.log('Could not load saved stats');
     }
   }
-  const savedDifficulty = localStorage.getItem('seatgeek_sim_difficulty');
+  const savedDifficulty = localStorage.getItem('bts_sim_difficulty');
   if (savedDifficulty && difficultySettings[savedDifficulty]) {
     gameState.difficulty = savedDifficulty;
     applyDifficultySettings(savedDifficulty);
@@ -112,8 +112,8 @@ function loadGameStats() {
 
 // Save stats to localStorage
 function saveGameStats() {
-  localStorage.setItem('seatgeek_sim_stats', JSON.stringify(gameState.sessionStats));
-  localStorage.setItem('seatgeek_sim_difficulty', gameState.difficulty);
+  localStorage.setItem('bts_sim_stats', JSON.stringify(gameState.sessionStats));
+  localStorage.setItem('bts_sim_difficulty', gameState.difficulty);
 }
 
 // Apply difficulty settings (without resetting)
@@ -993,7 +993,7 @@ function renderListings() {
     return `
     <div class="listing-card" data-section="${listing.sectionId}" data-row="${listing.row}">
       <div class="listing-image">
-        <img src="${listingImagePath}" alt="Section view" onerror="this.src='bts.jpg'">
+        <img src="${listingImagePath}" alt="Section view" loading="lazy" onerror="this.src='bts.jpg'">
         <div class="section-indicator"></div>
       </div>
       <div class="listing-info">
@@ -1099,7 +1099,7 @@ function showListingDetail(listing) {
     return `
     <div class="similar-listing-card" data-section="${similar.sectionId}" data-row="${similar.row}">
       <div class="similar-listing-image">
-        <img src="${similarImagePath}" alt="View from section" onerror="this.src='bts.jpg'">
+        <img src="${similarImagePath}" alt="View from section" loading="lazy" onerror="this.src='bts.jpg'">
       </div>
       <div class="similar-listing-section">${similar.sectionName}</div>
       <div class="similar-listing-row">Row ${similar.row}, Seats ${startSeat}-${endSeat}</div>
@@ -1622,7 +1622,7 @@ function setupModals() {
   const perksBtn = document.getElementById('perks-btn');
 
   // Check if first launch (no saved settings)
-  const isFirstLaunch = !localStorage.getItem('seatgeek_sim_difficulty');
+  const isFirstLaunch = !localStorage.getItem('bts_sim_difficulty');
 
   // Show settings modal on first launch, otherwise quantity modal
   setTimeout(() => {
@@ -1836,7 +1836,7 @@ function setupModals() {
         rating: state.selectedListing.rating,
         hasAisle: state.selectedListing.perks.aisle
       };
-      localStorage.setItem('seatgeek_checkout_data', JSON.stringify(checkoutData));
+      localStorage.setItem('bts_checkout_data', JSON.stringify(checkoutData));
 
       // Navigate to checkout page with parameters
       const params = new URLSearchParams({
@@ -2177,10 +2177,10 @@ async function init() {
   // Do NOT auto-start timer or bot activity on launch
 
   // Check if returning from successful checkout
-  const successDataStr = localStorage.getItem('seatgeek_show_success');
+  const successDataStr = localStorage.getItem('bts_show_success');
   if (successDataStr) {
     const successData = JSON.parse(successDataStr);
-    localStorage.removeItem('seatgeek_show_success');
+    localStorage.removeItem('bts_show_success');
 
     // Show success modal with the data
     setTimeout(() => {

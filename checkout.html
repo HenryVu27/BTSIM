@@ -15,8 +15,8 @@
   </script>
 
   <!-- SEO Meta Tags -->
-  <meta name="description" content="Practice the BTS concert ticket checkout process. Learn how to complete your purchase quickly on SeatGeek before tickets go on sale.">
-  <meta name="keywords" content="BTS ticket checkout, SeatGeek checkout practice, BTS concert tickets, ticket buying simulator">
+  <meta name="description" content="Practice the BTS concert ticket checkout process. Learn how to complete your purchase quickly before tickets go on sale.">
+  <meta name="keywords" content="BTS ticket checkout, BTS checkout practice, BTS concert tickets, ticket buying simulator">
   <meta name="robots" content="index, follow">
 
   <!-- Canonical URL -->
@@ -624,7 +624,7 @@
     <!-- Right Column - Order Summary -->
     <div class="order-summary">
       <div class="event-image">
-        <img src="bts.jpg" alt="BTS Concert">
+        <img src="bts.jpg" alt="BTS Concert" loading="lazy">
         <div class="image-dots">
           <div class="image-dot active"></div>
           <div class="image-dot"></div>
@@ -776,11 +776,11 @@
       }
 
       // Get checkout data from localStorage
-      const checkoutDataStr = localStorage.getItem('seatgeek_checkout_data');
+      const checkoutDataStr = localStorage.getItem('bts_checkout_data');
       const checkoutData = checkoutDataStr ? JSON.parse(checkoutDataStr) : null;
 
       // Load and update stats
-      const statsStr = localStorage.getItem('seatgeek_sim_stats');
+      const statsStr = localStorage.getItem('bts_sim_stats');
       const stats = statsStr ? JSON.parse(statsStr) : {
         attempts: 0,
         successes: 0,
@@ -817,7 +817,7 @@
         }
 
         // Save updated stats
-        localStorage.setItem('seatgeek_sim_stats', JSON.stringify(stats));
+        localStorage.setItem('bts_sim_stats', JSON.stringify(stats));
       }
 
       // Store success data for main page to show
@@ -828,10 +828,10 @@
         price: checkoutData ? checkoutData.price : 0,
         quantity: checkoutData ? checkoutData.quantity : 0
       };
-      localStorage.setItem('seatgeek_show_success', JSON.stringify(successData));
+      localStorage.setItem('bts_show_success', JSON.stringify(successData));
 
       // Clear checkout data
-      localStorage.removeItem('seatgeek_checkout_data');
+      localStorage.removeItem('bts_checkout_data');
 
       // Redirect back to main page
       window.location.href = 'index.html?success=true';
