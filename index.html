@@ -62,133 +62,6 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Waiting Room Overlay -->
-  <div class="waiting-room" id="waiting-room">
-    <div class="waiting-room-content">
-      <h2>Tickets on sale in</h2>
-      <div class="event-name">BTS WORLD TOUR 'ARIRANG'</div>
-      <div class="countdown-display" id="countdown-display">10</div>
-      <div class="countdown-label">seconds</div>
-      <button class="skip-countdown-btn" id="skip-countdown">Skip countdown</button>
-    </div>
-  </div>
-
-  <!-- Success Modal -->
-  <div class="success-modal" id="success-modal">
-    <div class="success-content">
-      <div class="success-icon">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M20 6L9 17l-5-5"/>
-        </svg>
-      </div>
-      <h2>Tickets Secured!</h2>
-      <div class="success-time" id="success-time">12.34s</div>
-      <div class="success-details" id="success-details">
-        Section 304, Row B<br>
-        2 tickets at $169 each
-      </div>
-      <div class="success-actions">
-        <button class="success-btn secondary" id="success-stats">View Stats</button>
-        <button class="success-btn primary" id="success-again">Try Again</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Stolen Notification -->
-  <div class="stolen-notification" id="stolen-notification">
-    Someone else got those tickets!
-  </div>
-
-  <!-- Settings Modal -->
-  <div class="settings-modal" id="settings-modal">
-    <div class="settings-content">
-      <div class="settings-header">
-        <h2>Simulator Settings</h2>
-        <button class="settings-close" id="settings-close">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-
-      <div class="settings-section">
-        <h3>Difficulty</h3>
-        <div class="difficulty-options" id="difficulty-options">
-          <label class="difficulty-option" data-difficulty="easy">
-            <input type="radio" name="difficulty" value="easy">
-            <div class="difficulty-radio"></div>
-            <div class="difficulty-info">
-              <div class="difficulty-name">Easy</div>
-              <div class="difficulty-desc">Practice mode - no pressure</div>
-            </div>
-          </label>
-          <label class="difficulty-option selected" data-difficulty="medium">
-            <input type="radio" name="difficulty" value="medium" checked>
-            <div class="difficulty-radio"></div>
-            <div class="difficulty-info">
-              <div class="difficulty-name">Medium</div>
-              <div class="difficulty-desc">Some competition from other buyers</div>
-            </div>
-          </label>
-          <label class="difficulty-option" data-difficulty="hard">
-            <input type="radio" name="difficulty" value="hard">
-            <div class="difficulty-radio"></div>
-            <div class="difficulty-info">
-              <div class="difficulty-name">Hard</div>
-              <div class="difficulty-desc">High demand event simulation</div>
-            </div>
-          </label>
-          <label class="difficulty-option" data-difficulty="nightmare">
-            <input type="radio" name="difficulty" value="nightmare">
-            <div class="difficulty-radio"></div>
-            <div class="difficulty-info">
-              <div class="difficulty-name">Nightmare</div>
-              <div class="difficulty-desc">BTS/Taylor Swift level chaos</div>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <h3>Mode</h3>
-        <div class="countdown-toggle">
-          <div class="countdown-toggle-info">
-            <h4>Countdown Mode</h4>
-            <p>Simulate waiting for onsale time</p>
-          </div>
-          <label class="toggle-switch">
-            <input type="checkbox" id="countdown-mode-toggle">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <h3>Your Stats</h3>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value time" id="stat-best-time">--</div>
-            <div class="stat-label">Best Time</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-success-rate">0%</div>
-            <div class="stat-label">Success Rate</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-total-attempts">0</div>
-            <div class="stat-label">Attempts</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-best-section">--</div>
-            <div class="stat-label">Best Section</div>
-          </div>
-        </div>
-        <button class="reset-stats-btn" id="reset-stats">Reset All Stats</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Header -->
   <header class="header">
     <div class="header-left">
@@ -569,11 +442,214 @@
     <div class="tooltip-perks"></div>
   </div>
 
-  <!-- Game Modules (load before app.js) -->
-  <script src="game-config.js"></script>
-  <script src="score-tracker.js"></script>
-  <script src="bot-simulator.js"></script>
-  <script src="countdown-timer.js"></script>
+  <!-- Modals (at end of body to not affect layout) -->
+
+  <!-- Ready Screen Modal -->
+  <div class="modal-overlay" id="ready-modal">
+    <div class="ready-modal-content">
+      <div class="ready-text">Get Ready</div>
+    </div>
+  </div>
+
+  <!-- Waiting Room Overlay -->
+  <div class="waiting-room" id="waiting-room">
+    <div class="waiting-room-content">
+      <h2>Tickets on sale in</h2>
+      <div class="event-name">BTS WORLD TOUR 'ARIRANG'</div>
+      <div class="countdown-display" id="countdown-display">10</div>
+      <div class="countdown-label">seconds</div>
+      <button class="skip-countdown-btn" id="skip-countdown">Skip countdown</button>
+    </div>
+  </div>
+
+  <!-- Checkout Modal -->
+  <div class="checkout-modal" id="checkout-modal">
+    <div class="checkout-content">
+      <div class="checkout-header">
+        <button class="checkout-back" id="checkout-back">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <h2>Checkout</h2>
+        <div class="checkout-timer" id="checkout-timer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span id="checkout-time-remaining">5:00</span>
+        </div>
+      </div>
+
+      <div class="checkout-summary">
+        <div class="checkout-event">
+          <img src="bts.jpg" alt="BTS" class="checkout-thumbnail">
+          <div class="checkout-event-info">
+            <div class="checkout-event-title">BTS WORLD TOUR 'ARIRANG'</div>
+            <div class="checkout-event-details">Sat Aug 15 at 8:00pm</div>
+            <div class="checkout-event-venue">AT&T Stadium, Arlington, TX</div>
+          </div>
+        </div>
+        <div class="checkout-tickets">
+          <span class="checkout-section" id="checkout-section">Section 404, Row AA2</span>
+          <span class="checkout-qty" id="checkout-qty">2 Tickets</span>
+        </div>
+      </div>
+
+      <div class="checkout-payment">
+        <h3>Payment Method</h3>
+        <div class="payment-option selected">
+          <div class="payment-radio"></div>
+          <svg width="32" height="20" viewBox="0 0 32 20" fill="none">
+            <rect width="32" height="20" rx="3" fill="#1A1F71"/>
+            <text x="16" y="13" text-anchor="middle" fill="white" font-size="8" font-weight="bold">VISA</text>
+          </svg>
+          <span>**** 4242</span>
+        </div>
+        <div class="payment-option">
+          <div class="payment-radio"></div>
+          <svg width="32" height="20" viewBox="0 0 32 20" fill="none">
+            <rect width="32" height="20" rx="3" fill="#EB001B"/>
+            <circle cx="12" cy="10" r="6" fill="#EB001B"/>
+            <circle cx="20" cy="10" r="6" fill="#F79E1B"/>
+          </svg>
+          <span>**** 5678</span>
+        </div>
+      </div>
+
+      <div class="checkout-total">
+        <div class="checkout-line">
+          <span>Tickets (<span id="checkout-ticket-count">2</span>x <span id="checkout-price-each">$102</span>)</span>
+          <span id="checkout-subtotal">$204</span>
+        </div>
+        <div class="checkout-line total">
+          <span>Total</span>
+          <span id="checkout-total-price">$204</span>
+        </div>
+      </div>
+
+      <button class="checkout-pay-btn" id="checkout-pay-btn">
+        <span>Place Order</span>
+      </button>
+      <p class="checkout-disclaimer">By placing this order, you agree to SeatGeek's Terms of Use.</p>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="success-modal" id="success-modal">
+    <div class="success-content">
+      <div class="success-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M20 6L9 17l-5-5"/>
+        </svg>
+      </div>
+      <h2>Tickets Secured!</h2>
+      <div class="success-time" id="success-time">12.34s</div>
+      <div class="success-details" id="success-details">
+        Section 304, Row B<br>
+        2 tickets at $169 each
+      </div>
+      <div class="success-actions">
+        <button class="success-btn secondary" id="success-stats">View Stats</button>
+        <button class="success-btn primary" id="success-again">Try Again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stolen Notification -->
+  <div class="stolen-notification" id="stolen-notification">
+    Someone else got those tickets!
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="settings-modal" id="settings-modal">
+    <div class="settings-content">
+      <div class="settings-header">
+        <h2>Simulator Settings</h2>
+        <button class="settings-close" id="settings-close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="settings-section">
+        <h3>Difficulty</h3>
+        <div class="difficulty-options" id="difficulty-options">
+          <label class="difficulty-option" data-difficulty="easy">
+            <input type="radio" name="difficulty" value="easy">
+            <div class="difficulty-radio"></div>
+            <div class="difficulty-info">
+              <div class="difficulty-name">Easy</div>
+              <div class="difficulty-desc">Practice mode - no pressure</div>
+            </div>
+          </label>
+          <label class="difficulty-option selected" data-difficulty="medium">
+            <input type="radio" name="difficulty" value="medium" checked>
+            <div class="difficulty-radio"></div>
+            <div class="difficulty-info">
+              <div class="difficulty-name">Medium</div>
+              <div class="difficulty-desc">Some competition from other buyers</div>
+            </div>
+          </label>
+          <label class="difficulty-option" data-difficulty="hard">
+            <input type="radio" name="difficulty" value="hard">
+            <div class="difficulty-radio"></div>
+            <div class="difficulty-info">
+              <div class="difficulty-name">Hard</div>
+              <div class="difficulty-desc">High demand event simulation</div>
+            </div>
+          </label>
+          <label class="difficulty-option" data-difficulty="nightmare">
+            <input type="radio" name="difficulty" value="nightmare">
+            <div class="difficulty-radio"></div>
+            <div class="difficulty-info">
+              <div class="difficulty-name">Nightmare</div>
+              <div class="difficulty-desc">BTS/Taylor Swift level chaos</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Mode</h3>
+        <div class="countdown-toggle">
+          <div class="countdown-toggle-info">
+            <h4>Countdown Mode</h4>
+            <p>Simulate waiting for onsale time</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="countdown-mode-toggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Your Stats</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value time" id="stat-best-time">--</div>
+            <div class="stat-label">Best Time</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-success-rate">0%</div>
+            <div class="stat-label">Success Rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-total-attempts">0</div>
+            <div class="stat-label">Attempts</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-best-section">--</div>
+            <div class="stat-label">Best Section</div>
+          </div>
+        </div>
+        <button class="reset-stats-btn" id="reset-stats">Reset All Stats</button>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 

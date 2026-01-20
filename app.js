@@ -60,29 +60,29 @@ const difficultySettings = {
   medium: {
     label: 'Medium',
     description: 'Some tickets sell out while browsing',
-    availablePercent: { min: 0.45, max: 0.60 },
+    availablePercent: { min: 0.40, max: 0.55 },
     botEnabled: true,
-    botSpeed: 8000,
-    holdTime: 60,
-    ticketDisappearRate: 0.02
+    botSpeed: 2000,      // Check every 2 seconds
+    holdTime: 45,
+    ticketDisappearRate: 0.08  // 8% chance each check
   },
   hard: {
     label: 'Hard',
     description: 'High demand, tickets go fast',
-    availablePercent: { min: 0.25, max: 0.40 },
+    availablePercent: { min: 0.20, max: 0.35 },
     botEnabled: true,
-    botSpeed: 4000,
-    holdTime: 30,
-    ticketDisappearRate: 0.05
+    botSpeed: 1000,      // Check every 1 second
+    holdTime: 20,
+    ticketDisappearRate: 0.15  // 15% chance each check
   },
   nightmare: {
     label: 'Nightmare',
-    description: 'BTS onsale day experience',
-    availablePercent: { min: 0.10, max: 0.20 },
+    description: 'BTS onsale day - thousands competing',
+    availablePercent: { min: 0.05, max: 0.15 },
     botEnabled: true,
-    botSpeed: 2000,
-    holdTime: 15,
-    ticketDisappearRate: 0.10
+    botSpeed: 500,       // Check every 0.5 seconds
+    holdTime: 10,
+    ticketDisappearRate: 0.25  // 25% chance each check - chaos!
   }
 };
 
@@ -131,6 +131,7 @@ function changeDifficulty(difficulty) {
   applyDifficultySettings(difficulty);
   saveGameStats();
   updateDifficultyDisplay();
+  updateDifficultyBadge();
   refreshTickets();
 }
 
@@ -169,18 +170,46 @@ function updateStatsDisplay() {
   }
 }
 
+// Show ready modal before refresh
+function showReadyModal() {
+  const readyModal = document.getElementById('ready-modal');
+  if (readyModal) {
+    readyModal.classList.add('visible');
+  }
+}
+
+// Hide ready modal
+function hideReadyModal() {
+  const readyModal = document.getElementById('ready-modal');
+  if (readyModal) {
+    readyModal.classList.remove('visible');
+  }
+}
+
 // Refresh tickets (regenerate availability)
 function refreshTickets() {
   console.log('Refreshing tickets...');
 
-  // Record attempt start time
+  // Stop any existing bot first
+  stopBotActivity();
+
+  // Show ready modal
+  showReadyModal();
+
+  // Wait 2 seconds, then do the actual refresh
+  setTimeout(() => {
+    hideReadyModal();
+    performRefresh();
+  }, 2000);
+}
+
+// Perform the actual refresh logic
+function performRefresh() {
+  // Record attempt start time (timer starts AFTER ready screen)
   gameState.currentAttempt.startTime = Date.now();
   gameState.sessionStats.attempts++;
   saveGameStats();
   updateStatsDisplay();
-
-  // Stop any existing bot
-  stopBotActivity();
 
   // Get the SVG
   const mapContainer = document.getElementById('map-container');
@@ -250,30 +279,74 @@ function startBotActivity() {
   if (!settings.botEnabled) return;
 
   gameState.botInterval = setInterval(() => {
-    // Random chance to remove a listing
-    if (Math.random() < settings.ticketDisappearRate && state.listings.length > 5) {
-      const randomIndex = Math.floor(Math.random() * state.listings.length);
-      const removedListing = state.listings[randomIndex];
+    if (state.listings.length === 0) return;
 
-      // Remove the listing
-      state.listings.splice(randomIndex, 1);
+    // Determine how many listings to remove this tick
+    // Nightmare: 3-8 listings, Hard: 2-5, Medium: 1-3
+    const baseRemove = gameState.difficulty === 'nightmare' ? 3 :
+                       gameState.difficulty === 'hard' ? 2 : 1;
+    const maxExtra = gameState.difficulty === 'nightmare' ? 5 :
+                     gameState.difficulty === 'hard' ? 3 : 2;
+    const numToRemove = Math.min(
+      baseRemove + Math.floor(Math.random() * maxExtra),
+      state.listings.length
+    );
 
-      // If viewing this listing, show sold message
-      if (state.selectedListing &&
-          state.selectedListing.sectionId === removedListing.sectionId &&
-          state.selectedListing.row === removedListing.row) {
+    const sectionsAffected = new Set();
+
+    // Chance to wipe out an entire section (someone bought all tickets)
+    // Nightmare: 15% chance, Hard: 8%, Medium: 3%
+    const sectionWipeChance = gameState.difficulty === 'nightmare' ? 0.15 :
+                              gameState.difficulty === 'hard' ? 0.08 : 0.03;
+
+    if (Math.random() < sectionWipeChance && state.availableSectionIds.size > 0) {
+      // Pick a random section and remove ALL its listings
+      const availableSections = [...state.availableSectionIds];
+      const sectionToWipe = availableSections[Math.floor(Math.random() * availableSections.length)];
+
+      // Check if user is viewing this section
+      if (state.selectedListing && state.selectedListing.sectionId === sectionToWipe) {
         showListingSoldOut();
       }
 
+      // Remove all listings for this section
+      state.listings = state.listings.filter(l => l.sectionId !== sectionToWipe);
+      markSectionSoldOut(sectionToWipe);
       renderListings();
+      return;
+    }
 
-      // Small chance to also mark the section as sold out
-      if (Math.random() < 0.3) {
-        const sectionListings = state.listings.filter(l => l.sectionId === removedListing.sectionId);
-        if (sectionListings.length === 0) {
-          markSectionSoldOut(removedListing.sectionId);
+    // Remove individual listings
+    for (let i = 0; i < numToRemove && state.listings.length > 0; i++) {
+      if (Math.random() < settings.ticketDisappearRate) {
+        const randomIndex = Math.floor(Math.random() * state.listings.length);
+        const removedListing = state.listings[randomIndex];
+
+        // Remove the listing
+        state.listings.splice(randomIndex, 1);
+        sectionsAffected.add(removedListing.sectionId);
+
+        // If viewing this listing, show sold message
+        if (state.selectedListing &&
+            state.selectedListing.sectionId === removedListing.sectionId &&
+            state.selectedListing.row === removedListing.row) {
+          showListingSoldOut();
         }
       }
+    }
+
+    // Update affected sections
+    sectionsAffected.forEach(sectionId => {
+      const sectionListings = state.listings.filter(l => l.sectionId === sectionId);
+      if (sectionListings.length === 0) {
+        markSectionSoldOut(sectionId);
+      } else {
+        updateSectionColor(sectionId);
+      }
+    });
+
+    if (sectionsAffected.size > 0) {
+      renderListings();
     }
   }, settings.botSpeed);
 }
@@ -299,7 +372,38 @@ function markSectionSoldOut(sectionId) {
     path.classList.remove('section-available');
     path.classList.add('section-unavailable');
     path.setAttribute('fill', '#e0e0e0');
+    path.dataset.tierColor = '#e0e0e0';
   }
+}
+
+// Update a single section's color based on remaining listings
+function updateSectionColor(sectionId) {
+  const mapContainer = document.getElementById('map-container');
+  const svg = mapContainer.querySelector('svg');
+  const path = svg?.querySelector(`path[id="${sectionId}"]`);
+
+  if (!path) return;
+
+  const sectionListings = state.listings.filter(l => l.sectionId === sectionId);
+  if (sectionListings.length === 0) {
+    markSectionSoldOut(sectionId);
+    return;
+  }
+
+  // Get new lowest price
+  const price = Math.min(...sectionListings.map(l => l.price));
+
+  // Color based on price tier
+  let bgColor = '';
+  if (price < 200) bgColor = '#e8f5e9';
+  else if (price < 400) bgColor = '#c8e6c9';
+  else if (price < 600) bgColor = '#a5d6a7';
+  else if (price < 800) bgColor = '#81c784';
+  else bgColor = '#66bb6a';
+
+  path.setAttribute('fill', bgColor);
+  path.dataset.tierColor = bgColor;
+  path.dataset.price = price;
 }
 
 // Show listing sold out message
@@ -340,23 +444,26 @@ function stopHoldTimer() {
 }
 
 function updateHoldTimerDisplay() {
+  // Update the progress bar style timer
+  updateHoldTimerBar();
+
+  // Also update legacy timer if it exists
   const timerEl = document.getElementById('hold-timer');
   const timerContainer = document.getElementById('hold-timer-container');
 
-  if (!timerEl || !timerContainer) return;
+  if (timerEl && timerContainer) {
+    if (gameState.holdTimeRemaining > 0) {
+      timerContainer.classList.add('visible');
+      timerEl.textContent = gameState.holdTimeRemaining;
 
-  if (gameState.holdTimeRemaining > 0) {
-    timerContainer.classList.add('visible');
-    timerEl.textContent = gameState.holdTimeRemaining;
-
-    // Add urgency class when time is low
-    if (gameState.holdTimeRemaining <= 10) {
-      timerContainer.classList.add('urgent');
+      if (gameState.holdTimeRemaining <= 10) {
+        timerContainer.classList.add('urgent');
+      } else {
+        timerContainer.classList.remove('urgent');
+      }
     } else {
-      timerContainer.classList.remove('urgent');
+      timerContainer.classList.remove('visible', 'urgent');
     }
-  } else {
-    timerContainer.classList.remove('visible', 'urgent');
   }
 }
 
@@ -1017,6 +1124,9 @@ function showListingDetail(listing) {
   panel.scrollTop = 0; // Scroll to top when showing new listing
   state.selectedSection = listing.sectionId;
   state.selectedListing = listing;
+
+  // Start hold timer for difficulty modes
+  startHoldTimer();
 }
 
 // Hide listing detail panel
@@ -1026,6 +1136,7 @@ function hideListingDetail() {
   state.selectedSection = null;
   state.selectedListing = null;
   clearSectionHighlight();
+  stopHoldTimer();
 }
 
 // Highlight section on map
@@ -1321,6 +1432,9 @@ function setupSectionInteraction(svg) {
 
   console.log('Section IDs found:', sectionIds.length, sectionIds.slice(0, 10));
 
+  // Store all section IDs for refresh functionality
+  state.allSectionIds = sectionIds;
+
   // Randomly select which sections are available (have tickets)
   state.availableSectionIds = selectAvailableSections(sectionIds);
 
@@ -1507,9 +1621,21 @@ function setupModals() {
   const perksModal = document.getElementById('perks-modal');
   const perksBtn = document.getElementById('perks-btn');
 
-  // Show quantity modal on initial load
+  // Check if first launch (no saved settings)
+  const isFirstLaunch = !localStorage.getItem('seatgeek_sim_difficulty');
+
+  // Show settings modal on first launch, otherwise quantity modal
   setTimeout(() => {
-    quantityModal.classList.add('visible');
+    if (isFirstLaunch) {
+      const settingsModal = document.getElementById('settings-modal');
+      if (settingsModal) {
+        updateSettingsModalStats();
+        settingsModal.classList.add('visible');
+      }
+    } else {
+      quantityModal.classList.add('visible');
+      quantityModal.classList.add('was-shown');
+    }
   }, 500);
 
   // Quantity modal
@@ -1694,18 +1820,32 @@ function setupModals() {
     similarGrid.scrollBy({ left: 180, behavior: 'smooth' });
   });
 
-  // Continue button - navigate to checkout
+  // Continue button - navigate to checkout page
   document.getElementById('continue-btn').addEventListener('click', () => {
     if (state.selectedListing) {
-      const listing = state.selectedListing;
-      const ticketCount = document.getElementById('ticket-count').textContent.split(' ')[0];
+      stopHoldTimer();
+      stopBotActivity();
+
+      // Save attempt data to localStorage for checkout page
+      const checkoutData = {
+        startTime: gameState.currentAttempt.startTime,
+        section: state.selectedListing.sectionName,
+        row: state.selectedListing.row,
+        price: state.selectedListing.price,
+        quantity: state.ticketQuantity,
+        rating: state.selectedListing.rating,
+        hasAisle: state.selectedListing.perks.aisle
+      };
+      localStorage.setItem('seatgeek_checkout_data', JSON.stringify(checkoutData));
+
+      // Navigate to checkout page with parameters
       const params = new URLSearchParams({
-        section: listing.sectionName,
-        row: `Row ${listing.row}`,
-        price: listing.price,
-        quantity: ticketCount,
-        rating: listing.rating,
-        aisle: listing.perks.aisle
+        section: state.selectedListing.sectionName,
+        row: `Row ${state.selectedListing.row}`,
+        price: state.selectedListing.price,
+        quantity: state.ticketQuantity,
+        rating: state.selectedListing.rating,
+        aisle: state.selectedListing.perks.aisle
       });
       window.location.href = `checkout.html?${params.toString()}`;
     }
@@ -1738,6 +1878,275 @@ function generatePriceHistogram() {
   document.getElementById('max-price-display').textContent = `$${max.toLocaleString()}`;
 }
 
+// Setup game UI (refresh button, settings, difficulty, etc.)
+function setupGameUI() {
+  // Load saved settings
+  loadGameStats();
+
+  // Refresh button
+  const refreshBtn = document.getElementById('refresh-btn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      refreshTickets();
+    });
+  }
+
+  // Settings button
+  const settingsBtn = document.getElementById('settings-btn');
+  const settingsModal = document.getElementById('settings-modal');
+  const settingsClose = document.getElementById('settings-close');
+
+  if (settingsBtn && settingsModal) {
+    settingsBtn.addEventListener('click', () => {
+      updateSettingsModalStats();
+      settingsModal.classList.add('visible');
+    });
+  }
+
+  if (settingsClose && settingsModal) {
+    settingsClose.addEventListener('click', () => {
+      settingsModal.classList.remove('visible');
+      // Show quantity modal after closing settings (for first launch flow)
+      const quantityModal = document.getElementById('quantity-modal');
+      if (quantityModal && !quantityModal.classList.contains('was-shown')) {
+        setTimeout(() => {
+          quantityModal.classList.add('visible');
+          quantityModal.classList.add('was-shown');
+        }, 200);
+      }
+    });
+  }
+
+  if (settingsModal) {
+    settingsModal.addEventListener('click', (e) => {
+      if (e.target === settingsModal) {
+        settingsModal.classList.remove('visible');
+        // Show quantity modal after closing settings (for first launch flow)
+        const quantityModal = document.getElementById('quantity-modal');
+        if (quantityModal && !quantityModal.classList.contains('was-shown')) {
+          setTimeout(() => {
+            quantityModal.classList.add('visible');
+            quantityModal.classList.add('was-shown');
+          }, 200);
+        }
+      }
+    });
+  }
+
+  // Difficulty options
+  document.querySelectorAll('.difficulty-option').forEach(option => {
+    option.addEventListener('click', () => {
+      const difficulty = option.dataset.difficulty;
+      if (difficulty) {
+        changeDifficulty(difficulty);
+        document.querySelectorAll('.difficulty-option').forEach(opt => {
+          opt.classList.toggle('selected', opt === option);
+        });
+      }
+    });
+  });
+
+  // Countdown mode toggle
+  const countdownToggle = document.getElementById('countdown-mode-toggle');
+  if (countdownToggle) {
+    countdownToggle.addEventListener('change', () => {
+      gameState.isOnsaleMode = countdownToggle.checked;
+    });
+  }
+
+  // Reset stats button
+  const resetStatsBtn = document.getElementById('reset-stats');
+  if (resetStatsBtn) {
+    resetStatsBtn.addEventListener('click', () => {
+      if (confirm('Reset all your stats? This cannot be undone.')) {
+        resetStats();
+        updateSettingsModalStats();
+      }
+    });
+  }
+
+  // Success modal buttons
+  const successAgain = document.getElementById('success-again');
+  const successStats = document.getElementById('success-stats');
+  const successModal = document.getElementById('success-modal');
+
+  if (successAgain) {
+    successAgain.addEventListener('click', () => {
+      successModal.classList.remove('visible');
+      refreshTickets();
+    });
+  }
+
+  if (successStats) {
+    successStats.addEventListener('click', () => {
+      successModal.classList.remove('visible');
+      settingsModal.classList.add('visible');
+      updateSettingsModalStats();
+    });
+  }
+
+  // Skip countdown button
+  const skipCountdown = document.getElementById('skip-countdown');
+  const waitingRoom = document.getElementById('waiting-room');
+  if (skipCountdown) {
+    skipCountdown.addEventListener('click', () => {
+      if (gameState.countdownInterval) {
+        clearInterval(gameState.countdownInterval);
+        gameState.countdownInterval = null;
+      }
+      waitingRoom.classList.remove('visible');
+      startOnsale();
+    });
+  }
+
+  // Update initial difficulty display
+  updateDifficultyBadge();
+  updateSettingsModalDifficulty();
+
+  // Start elapsed timer updater
+  setInterval(updateElapsedTimer, 100);
+}
+
+// Update elapsed timer display
+function updateElapsedTimer() {
+  const elapsedEl = document.getElementById('elapsed-time');
+  const timerContainer = document.getElementById('elapsed-timer');
+
+  if (!elapsedEl || !gameState.currentAttempt.startTime) return;
+
+  const elapsed = Date.now() - gameState.currentAttempt.startTime;
+  const seconds = (elapsed / 1000).toFixed(2);
+  elapsedEl.textContent = `${seconds}s`;
+
+  if (timerContainer) {
+    timerContainer.classList.add('active');
+  }
+}
+
+// Update difficulty badge display
+function updateDifficultyBadge() {
+  const badge = document.getElementById('difficulty-badge');
+  if (!badge) return;
+
+  const settings = difficultySettings[gameState.difficulty];
+  badge.textContent = settings.label;
+  badge.className = `difficulty-badge ${gameState.difficulty}`;
+}
+
+// Update settings modal difficulty selection
+function updateSettingsModalDifficulty() {
+  document.querySelectorAll('.difficulty-option').forEach(opt => {
+    opt.classList.toggle('selected', opt.dataset.difficulty === gameState.difficulty);
+  });
+}
+
+// Update stats in settings modal
+function updateSettingsModalStats() {
+  const bestTimeEl = document.getElementById('stat-best-time');
+  const successRateEl = document.getElementById('stat-success-rate');
+  const attemptsEl = document.getElementById('stat-total-attempts');
+  const bestSectionEl = document.getElementById('stat-best-section');
+
+  if (bestTimeEl) {
+    bestTimeEl.textContent = gameState.sessionStats.fastestCheckout
+      ? `${(gameState.sessionStats.fastestCheckout / 1000).toFixed(2)}s`
+      : '--';
+  }
+
+  if (successRateEl) {
+    const rate = gameState.sessionStats.attempts > 0
+      ? Math.round((gameState.sessionStats.successes / gameState.sessionStats.attempts) * 100)
+      : 0;
+    successRateEl.textContent = `${rate}%`;
+  }
+
+  if (attemptsEl) {
+    attemptsEl.textContent = gameState.sessionStats.attempts;
+  }
+
+  if (bestSectionEl) {
+    bestSectionEl.textContent = gameState.sessionStats.bestSection
+      ? `Sec ${gameState.sessionStats.bestSection}`
+      : '--';
+  }
+}
+
+// Show success modal
+function showSuccessModal() {
+  const modal = document.getElementById('success-modal');
+  const timeEl = document.getElementById('success-time');
+  const detailsEl = document.getElementById('success-details');
+
+  if (!modal || !state.selectedListing) return;
+
+  const checkoutTime = Date.now() - gameState.currentAttempt.startTime;
+  recordSuccessfulCheckout();
+
+  if (timeEl) {
+    timeEl.textContent = `${(checkoutTime / 1000).toFixed(2)}s`;
+  }
+
+  if (detailsEl) {
+    detailsEl.innerHTML = `${state.selectedListing.sectionName}, Row ${state.selectedListing.row}<br>${state.ticketQuantity} tickets at $${state.selectedListing.price} each`;
+  }
+
+  modal.classList.add('visible');
+}
+
+// Start countdown for onsale mode
+function startOnsaleCountdown(seconds = 10) {
+  const waitingRoom = document.getElementById('waiting-room');
+  const countdownDisplay = document.getElementById('countdown-display');
+
+  if (!waitingRoom || !countdownDisplay) return;
+
+  waitingRoom.classList.add('visible');
+  let remaining = seconds;
+  countdownDisplay.textContent = remaining;
+
+  gameState.countdownInterval = setInterval(() => {
+    remaining--;
+    countdownDisplay.textContent = remaining;
+
+    if (remaining <= 0) {
+      clearInterval(gameState.countdownInterval);
+      gameState.countdownInterval = null;
+      waitingRoom.classList.remove('visible');
+      startOnsale();
+    }
+  }, 1000);
+}
+
+// Start onsale (after countdown)
+function startOnsale() {
+  gameState.currentAttempt.startTime = Date.now();
+  gameState.sessionStats.attempts++;
+  saveGameStats();
+  startBotActivity();
+}
+
+// Update hold timer bar display
+function updateHoldTimerBar() {
+  const timerBar = document.getElementById('hold-timer-bar');
+  const progress = document.getElementById('hold-timer-progress');
+
+  if (!timerBar || !progress) return;
+
+  const settings = difficultySettings[gameState.difficulty];
+  if (settings.holdTime === 0 || gameState.holdTimeRemaining <= 0) {
+    timerBar.classList.remove('active', 'warning', 'critical');
+    return;
+  }
+
+  const percent = (gameState.holdTimeRemaining / settings.holdTime) * 100;
+  progress.style.width = `${percent}%`;
+  timerBar.classList.add('active');
+
+  // Warning states
+  timerBar.classList.toggle('warning', percent <= 50 && percent > 20);
+  timerBar.classList.toggle('critical', percent <= 20);
+}
+
 // Initialize application
 async function init() {
   console.log('Initializing SeatGeek simulator...');
@@ -1755,6 +2164,7 @@ async function init() {
   }
 
   setupModals();
+  setupGameUI();
 
   // Generate histogram after listings are created
   setTimeout(() => {
@@ -1762,6 +2172,43 @@ async function init() {
       generatePriceHistogram();
     }
   }, 100);
+
+  // Timer will start when user presses Refresh button
+  // Do NOT auto-start timer or bot activity on launch
+
+  // Check if returning from successful checkout
+  const successDataStr = localStorage.getItem('seatgeek_show_success');
+  if (successDataStr) {
+    const successData = JSON.parse(successDataStr);
+    localStorage.removeItem('seatgeek_show_success');
+
+    // Show success modal with the data
+    setTimeout(() => {
+      showSuccessModalWithData(successData);
+    }, 300);
+  }
+}
+
+// Show success modal with checkout data from localStorage
+function showSuccessModalWithData(successData) {
+  const modal = document.getElementById('success-modal');
+  const timeEl = document.getElementById('success-time');
+  const detailsEl = document.getElementById('success-details');
+
+  if (!modal) return;
+
+  if (timeEl && successData.checkoutTime) {
+    timeEl.textContent = `${(successData.checkoutTime / 1000).toFixed(2)}s`;
+  }
+
+  if (detailsEl) {
+    detailsEl.innerHTML = `${successData.section}, Row ${successData.row}<br>${successData.quantity} tickets at $${successData.price} each`;
+  }
+
+  // Update stats display
+  updateStatsDisplay();
+
+  modal.classList.add('visible');
 }
 
 // Share functionality

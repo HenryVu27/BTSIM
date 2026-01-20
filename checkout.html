@@ -774,8 +774,67 @@
         alert('Please enter a valid CVV');
         return;
       }
-      alert('Payment successful! Your tickets have been purchased.');
-      window.location.href = 'index.html';
+
+      // Get checkout data from localStorage
+      const checkoutDataStr = localStorage.getItem('seatgeek_checkout_data');
+      const checkoutData = checkoutDataStr ? JSON.parse(checkoutDataStr) : null;
+
+      // Load and update stats
+      const statsStr = localStorage.getItem('seatgeek_sim_stats');
+      const stats = statsStr ? JSON.parse(statsStr) : {
+        attempts: 0,
+        successes: 0,
+        fastestCheckout: null,
+        bestSection: null,
+        totalSpent: 0
+      };
+
+      // Calculate checkout time
+      let checkoutTime = null;
+      if (checkoutData && checkoutData.startTime) {
+        checkoutTime = Date.now() - checkoutData.startTime;
+
+        // Update stats
+        stats.successes++;
+
+        if (!stats.fastestCheckout || checkoutTime < stats.fastestCheckout) {
+          stats.fastestCheckout = checkoutTime;
+        }
+
+        // Track total spent
+        if (checkoutData.price && checkoutData.quantity) {
+          stats.totalSpent += checkoutData.price * checkoutData.quantity;
+        }
+
+        // Track best section
+        if (checkoutData.section) {
+          const sectionNum = parseInt(checkoutData.section.replace(/\D/g, ''));
+          if (!isNaN(sectionNum)) {
+            if (!stats.bestSection || sectionNum < stats.bestSection) {
+              stats.bestSection = sectionNum;
+            }
+          }
+        }
+
+        // Save updated stats
+        localStorage.setItem('seatgeek_sim_stats', JSON.stringify(stats));
+      }
+
+      // Store success data for main page to show
+      const successData = {
+        checkoutTime: checkoutTime,
+        section: checkoutData ? checkoutData.section : 'Unknown',
+        row: checkoutData ? checkoutData.row : 'Unknown',
+        price: checkoutData ? checkoutData.price : 0,
+        quantity: checkoutData ? checkoutData.quantity : 0
+      };
+      localStorage.setItem('seatgeek_show_success', JSON.stringify(successData));
+
+      // Clear checkout data
+      localStorage.removeItem('seatgeek_checkout_data');
+
+      // Redirect back to main page
+      window.location.href = 'index.html?success=true';
     });
   </script>
 </body>
