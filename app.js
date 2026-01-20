@@ -699,43 +699,36 @@ async function loadSVGMap() {
       svg.style.height = '100%';
       svg.style.pointerEvents = 'all';
 
-      // IMPORTANT: Hide the blue overlay layer that blocks clicks
-      // The SVG has duplicate section shapes - one with IDs (clickable) and one blue overlay (blocking)
+      // AGGRESSIVE APPROACH: Remove all blocking overlay elements entirely
+
+      // Step 1: Remove the blue overlay container
       const blueOverlay = svg.querySelector('#section-map-outline-container');
       if (blueOverlay) {
-        blueOverlay.style.display = 'none';
-        blueOverlay.style.pointerEvents = 'none';
-        console.log('Hidden blue overlay layer');
+        blueOverlay.remove();
+        console.log('Removed blue overlay container');
       }
 
-      // IMPORTANT: Disable pointer events on decorative shadow elements (DS: prefix)
-      // These are large shadow shapes that sit on top of sections and block mouse events
-      svg.querySelectorAll('path[id^="DS:"], path[id^="DS;"]').forEach(shadowEl => {
-        shadowEl.style.pointerEvents = 'none';
+      // Step 2: Remove ALL decorative shadow elements - these block clicks
+      // Method A: Remove by ID prefix (DS: or DS;)
+      // Method B: Remove any path with a filter attribute (shadow effects)
+      const shadowElements = [];
+      svg.querySelectorAll('path').forEach(path => {
+        const id = path.getAttribute('id') || '';
+        const hasFilter = path.getAttribute('filter');
+        // Match DS: prefix or DS; prefix or any path with shadow filter
+        if (id.startsWith('DS') || hasFilter) {
+          shadowElements.push(path);
+        }
       });
-      console.log('Disabled pointer events on decorative shadow elements');
+      shadowElements.forEach(el => el.remove());
+      console.log(`Removed ${shadowElements.length} shadow/decorative elements`);
 
-      // IMPORTANT: Disable pointer events on ALL text elements
-      // The SVG has white text labels (section numbers) that sit on top of sections and block hover
-      svg.querySelectorAll('text, tspan').forEach(textEl => {
-        textEl.style.pointerEvents = 'none';
-      });
-      console.log('Disabled pointer events on text elements');
-
-      // Remove any pointer-events:none from nested elements (except text)
-      // Also hide/remove overlay elements that might block interaction
+      // Step 3: Disable pointer events on all remaining non-section elements
       svg.querySelectorAll('*').forEach(el => {
-        // Skip text elements - we want them to have pointer-events: none
-        if (el.tagName === 'text' || el.tagName === 'tspan') return;
-
-        if (el.style.pointerEvents === 'none') {
-          el.style.pointerEvents = '';
-        }
-        // Remove fill-opacity:0 rectangles that act as overlays
-        if (el.tagName === 'rect' && el.getAttribute('fill-opacity') === '0') {
-          el.style.pointerEvents = 'none';
-        }
+        el.style.pointerEvents = 'none';
       });
+
+      console.log('Disabled pointer events on all SVG elements');
 
       // Also check for nested SVGs
       const nestedSvgs = svg.querySelectorAll('svg');
@@ -748,12 +741,10 @@ async function loadSVGMap() {
       setupSectionInteraction(svg);
       colorCodeSections(svg);
 
-      // Add price labels (as SVG elements)
-      setTimeout(() => {
-        createPriceLabels(svg);
-        // Seat generation disabled for performance - uncomment to enable:
-        // generateAllSeats(svg);
-      }, 100);
+      // Price labels disabled for debugging hover issues
+      // setTimeout(() => {
+      //   createPriceLabels(svg);
+      // }, 100);
 
       console.log('SVG setup complete');
     }
@@ -1401,10 +1392,84 @@ async function init() {
   }, 100);
 }
 
+// Share functionality
+function setupShareButtons() {
+  const twitterBtn = document.getElementById('share-twitter');
+  const copyBtn = document.getElementById('share-copy');
+  const closeBtn = document.getElementById('banner-close');
+  const banner = document.getElementById('simulator-banner');
+
+  const shareText = "Practice buying BTS concert tickets before they go on sale! Free simulator to master the SeatGeek interface. #BTS #BTSARMY #BTSArirangTour";
+  const shareUrl = window.location.href;
+
+  if (twitterBtn) {
+    twitterBtn.addEventListener('click', () => {
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+      window.open(twitterUrl, '_blank', 'width=550,height=420');
+    });
+  }
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast('Link copied to clipboard!');
+      } catch (err) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = shareUrl;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast('Link copied to clipboard!');
+      }
+    });
+  }
+
+  if (closeBtn && banner) {
+    closeBtn.addEventListener('click', () => {
+      banner.classList.add('hidden');
+      localStorage.setItem('bannerClosed', 'true');
+    });
+
+    // Check if banner was previously closed
+    if (localStorage.getItem('bannerClosed') === 'true') {
+      banner.classList.add('hidden');
+    }
+  }
+}
+
+function showToast(message) {
+  // Remove existing toast
+  const existingToast = document.querySelector('.toast');
+  if (existingToast) existingToast.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  // Trigger animation
+  setTimeout(() => toast.classList.add('visible'), 10);
+
+  // Remove after 3 seconds
+  setTimeout(() => {
+    toast.classList.remove('visible');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
 // Start the app
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+  setupShareButtons();
+});
 
 // Also try to start if DOM is already loaded
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  setTimeout(init, 100);
+  setTimeout(() => {
+    init();
+    setupShareButtons();
+  }, 100);
 }

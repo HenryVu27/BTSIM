@@ -1381,3 +1381,138 @@ body {
     width: 100%;
   }
 }
+
+/* Simulator Info Banner */
+.simulator-banner {
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  color: white;
+  padding: 12px 24px;
+  position: relative;
+  z-index: 100;
+}
+
+.simulator-banner.hidden {
+  display: none;
+}
+
+.banner-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+  gap: 20px;
+}
+
+.banner-text h1 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.banner-text p {
+  font-size: 13px;
+  opacity: 0.9;
+  max-width: 600px;
+}
+
+.banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.share-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.share-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.share-btn:active {
+  transform: translateY(0);
+}
+
+.share-btn svg {
+  flex-shrink: 0;
+}
+
+.banner-close {
+  background: transparent;
+  border: none;
+  color: white;
+  padding: 6px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner-close:hover {
+  opacity: 1;
+}
+
+/* Toast notification for copy link */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: #1a1a1a;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 10000;
+  opacity: 0;
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+.toast.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .simulator-banner {
+    padding: 12px 16px;
+  }
+
+  .banner-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .banner-text h1 {
+    font-size: 15px;
+  }
+
+  .banner-text p {
+    font-size: 12px;
+  }
+
+  .share-btn span {
+    display: none;
+  }
+
+  .share-btn {
+    padding: 8px;
+  }
+}
