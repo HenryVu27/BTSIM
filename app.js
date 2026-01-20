@@ -17,9 +17,7 @@ const state = {
   availableSectionIds: new Set(), // Sections with tickets available
   zoom: 1,
   pan: { x: 0, y: 0 },
-  showSeats: false, // Toggle seat visibility based on zoom
   hoveredSection: null,
-  seatElements: new Map(), // Cache seat SVG elements
   allSectionIds: [] // Store all section IDs for reset
 };
 
@@ -689,106 +687,6 @@ function getPathBounds(pathElement) {
   }
 }
 
-// Generate seat circles for a section
-function generateSeatCircles(svg, section, pathElement) {
-  const bounds = getPathBounds(pathElement);
-  if (!bounds || bounds.width < 50 || bounds.height < 50) return;
-
-  const seatRadius = Math.min(bounds.width, bounds.height) / 25; // Adaptive seat size
-  const padding = seatRadius * 0.8;
-  const rowSpacing = seatRadius * 2.5;
-  const seatSpacing = seatRadius * 2.3;
-
-  // Create a group for this section's seats
-  const seatsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  seatsGroup.setAttribute('class', 'section-seats');
-  seatsGroup.setAttribute('data-section', section.id);
-  seatsGroup.style.opacity = '0'; // Hidden initially, shown on zoom
-  seatsGroup.style.transition = 'opacity 0.3s ease';
-
-  // Calculate how many rows and seats fit
-  const numRows = Math.min(section.rows.length, Math.floor((bounds.height - padding * 2) / rowSpacing));
-
-  section.rows.slice(0, numRows).forEach((row, rowIndex) => {
-    const y = bounds.y + padding + rowIndex * rowSpacing + rowSpacing / 2;
-    const numSeats = Math.min(row.seats.length, Math.floor((bounds.width - padding * 2) / seatSpacing));
-    const rowWidth = numSeats * seatSpacing;
-    const startX = bounds.centerX - rowWidth / 2 + seatSpacing / 2;
-
-    row.seats.slice(0, numSeats).forEach((seat, seatIndex) => {
-      const x = startX + seatIndex * seatSpacing;
-
-      // Check if point is roughly inside the section path
-      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      circle.setAttribute('cx', x);
-      circle.setAttribute('cy', y);
-      circle.setAttribute('r', seatRadius);
-      circle.setAttribute('fill', getSeatColor(seat, section));
-      circle.setAttribute('class', 'seat-circle');
-      circle.setAttribute('data-section', section.id);
-      circle.setAttribute('data-row', row.id);
-      circle.setAttribute('data-seat', seat.id);
-      circle.setAttribute('data-available', seat.available);
-      circle.setAttribute('data-price', seat.price);
-
-      if (seat.available) {
-        circle.style.cursor = 'pointer';
-        circle.addEventListener('mouseenter', () => {
-          circle.setAttribute('fill', colors.hovered);
-          showSeatTooltip(circle, section, row, seat);
-        });
-        circle.addEventListener('mouseleave', () => {
-          circle.setAttribute('fill', getSeatColor(seat, section));
-          hideSeatTooltip();
-        });
-        circle.addEventListener('click', (e) => {
-          e.stopPropagation();
-          selectSeat(section, row, seat, circle);
-        });
-      }
-
-      seatsGroup.appendChild(circle);
-    });
-  });
-
-  // Insert seats group after the section path
-  pathElement.parentNode.insertBefore(seatsGroup, pathElement.nextSibling);
-  state.seatElements.set(section.id, seatsGroup);
-}
-
-// Show tooltip for individual seat
-function showSeatTooltip(circle, section, row, seat) {
-  const tooltip = document.getElementById('map-tooltip');
-  const rect = circle.getBoundingClientRect();
-
-  tooltip.querySelector('.tooltip-section').textContent = `${section.name}, Row ${row.id}`;
-  tooltip.querySelector('.tooltip-price').textContent = `$${seat.price.toLocaleString()}`;
-  tooltip.querySelector('.tooltip-perks').textContent = seat.type === 'aisle' ? 'Aisle seat' : 'Standard seat';
-
-  tooltip.style.left = `${rect.left + rect.width / 2}px`;
-  tooltip.style.top = `${rect.top - 10}px`;
-  tooltip.classList.add('visible');
-}
-
-function hideSeatTooltip() {
-  const tooltip = document.getElementById('map-tooltip');
-  tooltip.classList.remove('visible');
-}
-
-// Handle seat selection
-function selectSeat(section, row, seat, circle) {
-  console.log(`Selected: ${section.name}, Row ${row.id}, Seat ${seat.id} - $${seat.price}`);
-
-  // Visual feedback
-  circle.setAttribute('fill', colors.selected);
-
-  // Find matching listing and show detail
-  const listing = state.listings.find(l => l.sectionId === section.id && l.row === row.id);
-  if (listing) {
-    showListingDetail(listing);
-  }
-}
-
 // Create price labels as SVG elements (so they move with the map)
 function createPriceLabels(svg) {
   // Remove existing labels
@@ -892,20 +790,6 @@ function createPriceLabels(svg) {
 // No longer needed - labels are now in SVG
 function updatePriceLabelPositions() {
   // Labels now move with SVG automatically
-}
-
-// Toggle seat visibility based on zoom level
-function updateSeatVisibility() {
-  const showSeats = state.zoom > 1.8;
-
-  if (showSeats !== state.showSeats) {
-    state.showSeats = showSeats;
-
-    state.seatElements.forEach((seatsGroup) => {
-      seatsGroup.style.opacity = showSeats ? '1' : '0';
-      seatsGroup.style.pointerEvents = showSeats ? 'auto' : 'none';
-    });
-  }
 }
 
 // Generate all listings from sections
@@ -1132,11 +1016,79 @@ function showListingDetail(listing) {
 // Hide listing detail panel
 function hideListingDetail() {
   const panel = document.getElementById('listing-detail');
+  const sectionPanel = document.getElementById('section-detail');
   panel.classList.remove('visible');
-  state.selectedSection = null;
   state.selectedListing = null;
-  clearSectionHighlight();
   stopHoldTimer();
+
+  // Only clear section state if section detail panel is not visible
+  if (!sectionPanel.classList.contains('visible')) {
+    state.selectedSection = null;
+    clearSectionHighlight();
+  }
+}
+
+// Show section detail panel (for multi-row selection)
+function showSectionDetail(sectionId, sectionListings) {
+  const panel = document.getElementById('section-detail');
+  const title = document.getElementById('section-detail-title');
+  const count = document.getElementById('section-detail-count');
+  const rowsList = document.getElementById('section-rows-list');
+
+  // Get section name from first listing
+  const sectionName = sectionListings[0].sectionName;
+
+  // Set title and count
+  title.textContent = sectionName;
+  count.textContent = `${sectionListings.length} listing${sectionListings.length > 1 ? 's' : ''} available`;
+
+  // Sort listings by price
+  const sortedListings = [...sectionListings].sort((a, b) => a.price - b.price);
+
+  // Generate row cards
+  rowsList.innerHTML = sortedListings.map(listing => {
+    const sectionImagePath = `seatview_images/section-${listing.sectionId}.jpg`;
+    const ticketText = listing.seats === 1 ? '1 ticket' : `1-${listing.seats} tickets`;
+    return `
+      <div class="section-row-card" data-section="${listing.sectionId}" data-row="${listing.row}">
+        <div class="section-row-thumbnail">
+          <img src="${sectionImagePath}" alt="View from section" loading="lazy" onerror="this.src='bts.jpg'">
+        </div>
+        <div class="section-row-info">
+          <p class="section-row-name">Row ${listing.row}</p>
+          <p class="section-row-tickets">${ticketText}</p>
+        </div>
+        <div class="section-row-price">
+          <span class="section-row-price-amount">$${listing.price.toLocaleString()}</span>
+          <span class="section-row-price-label">incl. fees</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Add click handlers for row cards
+  rowsList.querySelectorAll('.section-row-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const row = card.dataset.row;
+      const listing = sectionListings.find(l => l.row === row);
+      if (listing) {
+        hideSectionDetail();
+        showListingDetail(listing);
+      }
+    });
+  });
+
+  panel.classList.add('visible');
+  panel.scrollTop = 0;
+  state.selectedSection = sectionId;
+  highlightSectionOnMap(sectionId);
+  zoomToSection(sectionId);
+}
+
+// Hide section detail panel
+function hideSectionDetail() {
+  const panel = document.getElementById('section-detail');
+  panel.classList.remove('visible');
 }
 
 // Highlight section on map
@@ -1276,9 +1228,6 @@ function setupMapInteraction(svg) {
     mainGroup.style.transform = `translate(${state.pan.x}px, ${state.pan.y}px) scale(${scaleVal})`;
     mainGroup.style.transformOrigin = 'center center';
 
-    // Update seat visibility (price labels now move with SVG automatically)
-    updateSeatVisibility();
-
     // Update zoom level indicator
     const zoomLevel = document.getElementById('zoom-level');
     if (zoomLevel) {
@@ -1405,9 +1354,25 @@ function setupSectionInteraction(svg) {
 
   console.log('Found paths:', allPaths.length);
 
+  // Disable pointer events on ALL non-section paths - they block clicks on sections
+  // This includes drop shadows (DS:, DS;), SRO, level outlines, etc.
+  allPaths.forEach(path => {
+    const id = path.getAttribute('id');
+    if (!id) return;
+
+    // Only allow pointer events on actual section paths (3-digit numbers or C-prefixed)
+    const isSection = /^\d{3}$/.test(id) || /^C\d+$/.test(id);
+    if (!isSection) {
+      path.style.pointerEvents = 'none';
+    }
+  });
+
   // Collect all section IDs from SVG
   const sectionIds = [];
   const sectionPathsMap = new Map();
+
+  // First pass: collect all valid section paths and track duplicates
+  const duplicatePaths = []; // Paths to hide (later duplicates)
 
   allPaths.forEach(path => {
     const id = path.getAttribute('id');
@@ -1423,11 +1388,25 @@ function setupSectionInteraction(svg) {
                        id !== 'ISM_Shadow' && id !== 'main-container' && id !== 'background-container';
 
     if (isSection && isNotLabel) {
-      sectionIds.push(id);
-      sectionPathsMap.set(id, path);
-      // Mark as section path for CSS
-      path.classList.add('section-path');
+      // Keep the FIRST path for each ID, hide later duplicates
+      if (sectionPathsMap.has(id)) {
+        // This is a duplicate - mark it to be hidden
+        duplicatePaths.push(path);
+      } else {
+        sectionIds.push(id);
+        sectionPathsMap.set(id, path);
+      }
     }
+  });
+
+  // Hide duplicate paths (the later white paths that appear in wrong position)
+  duplicatePaths.forEach(path => {
+    path.style.display = 'none';
+  });
+
+  // Mark only the first occurrence paths with section-path class
+  sectionPathsMap.forEach((path) => {
+    path.classList.add('section-path');
   });
 
   console.log('Section IDs found:', sectionIds.length, sectionIds.slice(0, 10));
@@ -1498,14 +1477,16 @@ function setupSectionInteraction(svg) {
       path.addEventListener('click', (e) => {
         e.stopPropagation();
         console.log('Clicked section:', id);
-        // Find the first listing for this section and show its detail
+        // Find all listings for this section
         const sectionListings = state.listings.filter(l => l.sectionId === id);
-        if (sectionListings.length > 0) {
-          // Sort by price and show cheapest listing
-          sectionListings.sort((a, b) => a.price - b.price);
+        if (sectionListings.length === 1) {
+          // Single listing - show detail directly
           showListingDetail(sectionListings[0]);
+          highlightSectionOnMap(id);
+        } else if (sectionListings.length > 1) {
+          // Multiple listings - show section detail for row selection
+          showSectionDetail(id, sectionListings);
         }
-        highlightSectionOnMap(id);
       });
     } else {
       // UNAVAILABLE SECTION: Disable interaction completely
@@ -1539,9 +1520,17 @@ function colorCodeSections(svg) {
     if (section) {
       // Get min price from listings for this section
       const sectionListings = state.listings.filter(l => l.sectionId === id);
-      const price = sectionListings.length > 0
-        ? Math.min(...sectionListings.map(l => l.price))
-        : section.basePrice;
+
+      // If no listings, grey out the section
+      if (sectionListings.length === 0) {
+        const grayColor = '#e0e0e0';
+        path.setAttribute('fill', grayColor);
+        path.dataset.tierColor = grayColor;
+        path.dataset.price = 0;
+        return;
+      }
+
+      const price = Math.min(...sectionListings.map(l => l.price));
 
       // Color based on price tier - lighter background for sections
       let bgColor = '';
@@ -1557,23 +1546,6 @@ function colorCodeSections(svg) {
       path.dataset.price = price;
     }
   });
-}
-
-// Generate all seat circles for visible sections
-function generateAllSeats(svg) {
-  console.log('Generating seat circles for', state.sections.length, 'sections');
-
-  // Only generate for a subset to avoid performance issues
-  const sectionsToRender = state.sections.slice(0, 100); // Limit for performance
-
-  sectionsToRender.forEach(section => {
-    const path = svg.querySelector(`path[id="${section.id}"]`);
-    if (path) {
-      generateSeatCircles(svg, section, path);
-    }
-  });
-
-  console.log('Generated seats for', state.seatElements.size, 'sections');
 }
 
 // Add price labels to map (for prominent sections)
@@ -1787,6 +1759,13 @@ function setupModals() {
   // Back button for listing detail
   document.getElementById('back-to-listings').addEventListener('click', () => {
     hideListingDetail();
+  });
+
+  // Back button for section detail
+  document.getElementById('back-from-section').addEventListener('click', () => {
+    hideSectionDetail();
+    clearSectionHighlight();
+    state.selectedSection = null;
   });
 
   // Auto-hide scrollbar for detail panel
