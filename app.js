@@ -19,14 +19,386 @@ const state = {
   pan: { x: 0, y: 0 },
   showSeats: false, // Toggle seat visibility based on zoom
   hoveredSection: null,
-  seatElements: new Map() // Cache seat SVG elements
+  seatElements: new Map(), // Cache seat SVG elements
+  allSectionIds: [] // Store all section IDs for reset
+};
+
+// Game State
+const gameState = {
+  difficulty: 'medium',
+  isOnsaleMode: false,
+  onsaleCountdown: null,
+  countdownInterval: null,
+  botInterval: null,
+  holdTimer: null,
+  holdTimerInterval: null,
+  holdTimeRemaining: 0,
+  sessionStats: {
+    attempts: 0,
+    successes: 0,
+    fastestCheckout: null,
+    bestSection: null,
+    totalSpent: 0
+  },
+  currentAttempt: {
+    startTime: null,
+    listingViewTime: null
+  }
+};
+
+// Difficulty configurations
+const difficultySettings = {
+  easy: {
+    label: 'Easy',
+    description: 'Learn the interface, no competition',
+    availablePercent: { min: 0.65, max: 0.80 },
+    botEnabled: false,
+    botSpeed: 0,
+    holdTime: 0,
+    ticketDisappearRate: 0
+  },
+  medium: {
+    label: 'Medium',
+    description: 'Some tickets sell out while browsing',
+    availablePercent: { min: 0.45, max: 0.60 },
+    botEnabled: true,
+    botSpeed: 8000,
+    holdTime: 60,
+    ticketDisappearRate: 0.02
+  },
+  hard: {
+    label: 'Hard',
+    description: 'High demand, tickets go fast',
+    availablePercent: { min: 0.25, max: 0.40 },
+    botEnabled: true,
+    botSpeed: 4000,
+    holdTime: 30,
+    ticketDisappearRate: 0.05
+  },
+  nightmare: {
+    label: 'Nightmare',
+    description: 'BTS onsale day experience',
+    availablePercent: { min: 0.10, max: 0.20 },
+    botEnabled: true,
+    botSpeed: 2000,
+    holdTime: 15,
+    ticketDisappearRate: 0.10
+  }
 };
 
 // Configuration for random availability
 const availabilityConfig = {
-  minAvailablePercent: 0.4, // At least 40% of sections available
-  maxAvailablePercent: 0.7  // At most 70% of sections available
+  minAvailablePercent: 0.45,
+  maxAvailablePercent: 0.60
 };
+
+// Load saved stats from localStorage
+function loadGameStats() {
+  const saved = localStorage.getItem('seatgeek_sim_stats');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      Object.assign(gameState.sessionStats, parsed);
+    } catch (e) {
+      console.log('Could not load saved stats');
+    }
+  }
+  const savedDifficulty = localStorage.getItem('seatgeek_sim_difficulty');
+  if (savedDifficulty && difficultySettings[savedDifficulty]) {
+    gameState.difficulty = savedDifficulty;
+    applyDifficultySettings(savedDifficulty);
+  }
+}
+
+// Save stats to localStorage
+function saveGameStats() {
+  localStorage.setItem('seatgeek_sim_stats', JSON.stringify(gameState.sessionStats));
+  localStorage.setItem('seatgeek_sim_difficulty', gameState.difficulty);
+}
+
+// Apply difficulty settings (without resetting)
+function applyDifficultySettings(difficulty) {
+  const settings = difficultySettings[difficulty];
+  if (!settings) return;
+
+  gameState.difficulty = difficulty;
+  availabilityConfig.minAvailablePercent = settings.availablePercent.min;
+  availabilityConfig.maxAvailablePercent = settings.availablePercent.max;
+}
+
+// Change difficulty and refresh
+function changeDifficulty(difficulty) {
+  applyDifficultySettings(difficulty);
+  saveGameStats();
+  updateDifficultyDisplay();
+  refreshTickets();
+}
+
+// Update difficulty display
+function updateDifficultyDisplay() {
+  const difficultyLabel = document.getElementById('current-difficulty');
+  if (difficultyLabel) {
+    difficultyLabel.textContent = difficultySettings[gameState.difficulty].label;
+  }
+
+  // Update selected state in settings modal
+  document.querySelectorAll('.difficulty-option').forEach(opt => {
+    opt.classList.toggle('selected', opt.dataset.difficulty === gameState.difficulty);
+  });
+}
+
+// Update stats display
+function updateStatsDisplay() {
+  const attemptsEl = document.getElementById('stat-attempts');
+  const successesEl = document.getElementById('stat-successes');
+  const fastestEl = document.getElementById('stat-fastest');
+  const rateEl = document.getElementById('stat-rate');
+
+  if (attemptsEl) attemptsEl.textContent = gameState.sessionStats.attempts;
+  if (successesEl) successesEl.textContent = gameState.sessionStats.successes;
+  if (fastestEl) {
+    fastestEl.textContent = gameState.sessionStats.fastestCheckout
+      ? `${(gameState.sessionStats.fastestCheckout / 1000).toFixed(1)}s`
+      : '--';
+  }
+  if (rateEl) {
+    const rate = gameState.sessionStats.attempts > 0
+      ? Math.round((gameState.sessionStats.successes / gameState.sessionStats.attempts) * 100)
+      : 0;
+    rateEl.textContent = `${rate}%`;
+  }
+}
+
+// Refresh tickets (regenerate availability)
+function refreshTickets() {
+  console.log('Refreshing tickets...');
+
+  // Record attempt start time
+  gameState.currentAttempt.startTime = Date.now();
+  gameState.sessionStats.attempts++;
+  saveGameStats();
+  updateStatsDisplay();
+
+  // Stop any existing bot
+  stopBotActivity();
+
+  // Get the SVG
+  const mapContainer = document.getElementById('map-container');
+  const svg = mapContainer.querySelector('svg');
+  if (!svg) return;
+
+  // Re-select available sections
+  if (state.allSectionIds.length > 0) {
+    state.availableSectionIds = selectAvailableSections(state.allSectionIds);
+
+    // Regenerate section data for available sections
+    state.sections = state.allSectionIds
+      .filter(id => state.availableSectionIds.has(id))
+      .map(id => generateSectionData(id));
+
+    // Regenerate listings
+    state.listings = generateListings();
+    renderListings();
+
+    // Update map colors
+    colorCodeSections(svg);
+
+    // Update section interactivity
+    updateSectionAvailability(svg);
+
+    // Generate histogram
+    if (state.listings.length > 0) {
+      generatePriceHistogram();
+    }
+
+    // Start bot activity if enabled
+    startBotActivity();
+
+    // Close any open listing detail
+    hideListingDetail();
+
+    showToast(`Tickets refreshed! ${state.availableSectionIds.size} sections available`);
+  }
+}
+
+// Update section availability on map
+function updateSectionAvailability(svg) {
+  const allPaths = svg.querySelectorAll('path.section-path');
+
+  allPaths.forEach(path => {
+    const id = path.getAttribute('id');
+    const isAvailable = state.availableSectionIds.has(id);
+
+    if (isAvailable) {
+      path.style.cursor = 'pointer';
+      path.style.pointerEvents = 'all';
+      path.classList.add('section-available');
+      path.classList.remove('section-unavailable');
+    } else {
+      path.style.cursor = 'default';
+      path.style.pointerEvents = 'none';
+      path.classList.remove('section-available');
+      path.classList.add('section-unavailable');
+      path.setAttribute('fill', '#e0e0e0');
+    }
+  });
+}
+
+// Bot activity - simulates other buyers purchasing tickets
+function startBotActivity() {
+  const settings = difficultySettings[gameState.difficulty];
+  if (!settings.botEnabled) return;
+
+  gameState.botInterval = setInterval(() => {
+    // Random chance to remove a listing
+    if (Math.random() < settings.ticketDisappearRate && state.listings.length > 5) {
+      const randomIndex = Math.floor(Math.random() * state.listings.length);
+      const removedListing = state.listings[randomIndex];
+
+      // Remove the listing
+      state.listings.splice(randomIndex, 1);
+
+      // If viewing this listing, show sold message
+      if (state.selectedListing &&
+          state.selectedListing.sectionId === removedListing.sectionId &&
+          state.selectedListing.row === removedListing.row) {
+        showListingSoldOut();
+      }
+
+      renderListings();
+
+      // Small chance to also mark the section as sold out
+      if (Math.random() < 0.3) {
+        const sectionListings = state.listings.filter(l => l.sectionId === removedListing.sectionId);
+        if (sectionListings.length === 0) {
+          markSectionSoldOut(removedListing.sectionId);
+        }
+      }
+    }
+  }, settings.botSpeed);
+}
+
+function stopBotActivity() {
+  if (gameState.botInterval) {
+    clearInterval(gameState.botInterval);
+    gameState.botInterval = null;
+  }
+}
+
+// Mark a section as sold out
+function markSectionSoldOut(sectionId) {
+  state.availableSectionIds.delete(sectionId);
+
+  const mapContainer = document.getElementById('map-container');
+  const svg = mapContainer.querySelector('svg');
+  const path = svg?.querySelector(`path[id="${sectionId}"]`);
+
+  if (path) {
+    path.style.cursor = 'default';
+    path.style.pointerEvents = 'none';
+    path.classList.remove('section-available');
+    path.classList.add('section-unavailable');
+    path.setAttribute('fill', '#e0e0e0');
+  }
+}
+
+// Show listing sold out message
+function showListingSoldOut() {
+  showToast('This listing is no longer available');
+  hideListingDetail();
+}
+
+// Hold timer for listing detail
+function startHoldTimer() {
+  const settings = difficultySettings[gameState.difficulty];
+  if (settings.holdTime === 0) return;
+
+  stopHoldTimer();
+
+  gameState.holdTimeRemaining = settings.holdTime;
+  gameState.currentAttempt.listingViewTime = Date.now();
+  updateHoldTimerDisplay();
+
+  gameState.holdTimerInterval = setInterval(() => {
+    gameState.holdTimeRemaining--;
+    updateHoldTimerDisplay();
+
+    if (gameState.holdTimeRemaining <= 0) {
+      stopHoldTimer();
+      showListingSoldOut();
+    }
+  }, 1000);
+}
+
+function stopHoldTimer() {
+  if (gameState.holdTimerInterval) {
+    clearInterval(gameState.holdTimerInterval);
+    gameState.holdTimerInterval = null;
+  }
+  gameState.holdTimeRemaining = 0;
+  updateHoldTimerDisplay();
+}
+
+function updateHoldTimerDisplay() {
+  const timerEl = document.getElementById('hold-timer');
+  const timerContainer = document.getElementById('hold-timer-container');
+
+  if (!timerEl || !timerContainer) return;
+
+  if (gameState.holdTimeRemaining > 0) {
+    timerContainer.classList.add('visible');
+    timerEl.textContent = gameState.holdTimeRemaining;
+
+    // Add urgency class when time is low
+    if (gameState.holdTimeRemaining <= 10) {
+      timerContainer.classList.add('urgent');
+    } else {
+      timerContainer.classList.remove('urgent');
+    }
+  } else {
+    timerContainer.classList.remove('visible', 'urgent');
+  }
+}
+
+// Record successful checkout
+function recordSuccessfulCheckout() {
+  const checkoutTime = Date.now() - gameState.currentAttempt.startTime;
+
+  gameState.sessionStats.successes++;
+
+  if (!gameState.sessionStats.fastestCheckout || checkoutTime < gameState.sessionStats.fastestCheckout) {
+    gameState.sessionStats.fastestCheckout = checkoutTime;
+  }
+
+  if (state.selectedListing) {
+    gameState.sessionStats.totalSpent += state.selectedListing.price * state.ticketQuantity;
+
+    // Track best section (lowest section number = closer to stage)
+    const sectionNum = parseInt(state.selectedListing.sectionId);
+    if (!isNaN(sectionNum)) {
+      if (!gameState.sessionStats.bestSection || sectionNum < gameState.sessionStats.bestSection) {
+        gameState.sessionStats.bestSection = sectionNum;
+      }
+    }
+  }
+
+  saveGameStats();
+  updateStatsDisplay();
+}
+
+// Reset stats
+function resetStats() {
+  gameState.sessionStats = {
+    attempts: 0,
+    successes: 0,
+    fastestCheckout: null,
+    bestSection: null,
+    totalSpent: 0
+  };
+  saveGameStats();
+  updateStatsDisplay();
+  showToast('Stats reset');
+}
 
 // Color scheme matching SeatGeek
 const colors = {
