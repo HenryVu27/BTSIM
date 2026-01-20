@@ -62,6 +62,133 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- Waiting Room Overlay -->
+  <div class="waiting-room" id="waiting-room">
+    <div class="waiting-room-content">
+      <h2>Tickets on sale in</h2>
+      <div class="event-name">BTS WORLD TOUR 'ARIRANG'</div>
+      <div class="countdown-display" id="countdown-display">10</div>
+      <div class="countdown-label">seconds</div>
+      <button class="skip-countdown-btn" id="skip-countdown">Skip countdown</button>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="success-modal" id="success-modal">
+    <div class="success-content">
+      <div class="success-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M20 6L9 17l-5-5"/>
+        </svg>
+      </div>
+      <h2>Tickets Secured!</h2>
+      <div class="success-time" id="success-time">12.34s</div>
+      <div class="success-details" id="success-details">
+        Section 304, Row B<br>
+        2 tickets at $169 each
+      </div>
+      <div class="success-actions">
+        <button class="success-btn secondary" id="success-stats">View Stats</button>
+        <button class="success-btn primary" id="success-again">Try Again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stolen Notification -->
+  <div class="stolen-notification" id="stolen-notification">
+    Someone else got those tickets!
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="settings-modal" id="settings-modal">
+    <div class="settings-content">
+      <div class="settings-header">
+        <h2>Simulator Settings</h2>
+        <button class="settings-close" id="settings-close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="settings-section">
+        <h3>Difficulty</h3>
+        <div class="difficulty-options" id="difficulty-options">
+          <label class="difficulty-option" data-difficulty="easy">
+            <input type="radio" name="difficulty" value="easy">
+            <div class="difficulty-radio"></div>
+            <div class="difficulty-info">
+              <div class="difficulty-name">Easy</div>
+              <div class="difficulty-desc">Practice mode - no pressure</div>
+            </div>
+          </label>
+          <label class="difficulty-option selected" data-difficulty="medium">
+            <input type="radio" name="difficulty" value="medium" checked>
+            <div class="difficulty-radio"></div>
+            <div class="difficulty-info">
+              <div class="difficulty-name">Medium</div>
+              <div class="difficulty-desc">Some competition from other buyers</div>
+            </div>
+          </label>
+          <label class="difficulty-option" data-difficulty="hard">
+            <input type="radio" name="difficulty" value="hard">
+            <div class="difficulty-radio"></div>
+            <div class="difficulty-info">
+              <div class="difficulty-name">Hard</div>
+              <div class="difficulty-desc">High demand event simulation</div>
+            </div>
+          </label>
+          <label class="difficulty-option" data-difficulty="nightmare">
+            <input type="radio" name="difficulty" value="nightmare">
+            <div class="difficulty-radio"></div>
+            <div class="difficulty-info">
+              <div class="difficulty-name">Nightmare</div>
+              <div class="difficulty-desc">BTS/Taylor Swift level chaos</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Mode</h3>
+        <div class="countdown-toggle">
+          <div class="countdown-toggle-info">
+            <h4>Countdown Mode</h4>
+            <p>Simulate waiting for onsale time</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="countdown-mode-toggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Your Stats</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value time" id="stat-best-time">--</div>
+            <div class="stat-label">Best Time</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-success-rate">0%</div>
+            <div class="stat-label">Success Rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-total-attempts">0</div>
+            <div class="stat-label">Attempts</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-best-section">--</div>
+            <div class="stat-label">Best Section</div>
+          </div>
+        </div>
+        <button class="reset-stats-btn" id="reset-stats">Reset All Stats</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Header -->
   <header class="header">
     <div class="header-left">
@@ -133,6 +260,33 @@
   <main class="main-content">
     <!-- Left Panel - Listings -->
     <aside class="listings-panel">
+      <!-- Game Controls Bar -->
+      <div class="game-controls">
+        <button class="refresh-btn" id="refresh-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+            <path d="M16 16h5v5"/>
+          </svg>
+          <span>Refresh</span>
+        </button>
+        <div class="elapsed-timer" id="elapsed-timer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span class="time-value" id="elapsed-time">0.00s</span>
+        </div>
+        <span class="difficulty-badge medium" id="difficulty-badge">Medium</span>
+        <button class="settings-btn" id="settings-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+
       <!-- Filter Bar -->
       <div class="filter-bar">
         <button class="filter-btn icon-filter">
@@ -291,6 +445,10 @@
 
   <!-- Listing Detail Panel (slides in from left) -->
   <div class="listing-detail-panel" id="listing-detail">
+    <!-- Hold Timer Bar -->
+    <div class="hold-timer-bar" id="hold-timer-bar">
+      <div class="hold-timer-progress" id="hold-timer-progress"></div>
+    </div>
     <div class="listing-detail-header">
       <button class="back-btn" id="back-to-listings">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -411,6 +569,16 @@
     <div class="tooltip-perks"></div>
   </div>
 
+  <!-- Game Modules (load before app.js) -->
+  <script src="game-config.js"></script>
+  <script src="score-tracker.js"></script>
+  <script src="bot-simulator.js"></script>
+  <script src="countdown-timer.js"></script>
+
   <script src="app.js"></script>
+
+  <footer style="position: fixed; bottom: 8px; right: 12px; font-size: 11px; color: #999; z-index: 10;">
+    <a href="https://henryvu27.github.io" target="_blank" rel="noopener" style="color: #999; text-decoration: none;">Built by Henry Vu</a>
+  </footer>
 </body>
 </html>
