@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Claude
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test files
+test_urls.txt

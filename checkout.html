@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout - BTS World Tour</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #fff;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .checkout-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+
+    .back-btn:hover {
+      background: #f5f5f5;
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .currency-selector {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .currency-flag {
+      width: 24px;
+      height: 16px;
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+      background: repeating-linear-gradient(
+        to bottom,
+        #B22234 0px, #B22234 2.46px,
+        #fff 2.46px, #fff 4.92px
+      );
+    }
+
+    .currency-flag::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 9.6px;
+      height: 8.6px;
+      background: #3C3B6E;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #1a1a1a;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* Protection Banner */
+    .protection-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      background: #f8f8f8;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    .protection-icon {
+      color: #1a8f41;
+    }
+
+    .protection-text {
+      font-size: 14px;
+      color: #1a1a1a;
+    }
+
+    .protection-link {
+      font-size: 14px;
+      color: #1a1a1a;
+      text-decoration: underline;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+
+    /* Main Content */
+    .checkout-main {
+      display: flex;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 32px;
+      gap: 60px;
+    }
+
+    /* Left Column - Form */
+    .checkout-form {
+      flex: 1;
+      max-width: 520px;
+    }
+
+    .form-title {
+      font-size: 36px;
+      font-weight: 600;
+      margin-bottom: 32px;
+      letter-spacing: -0.5px;
+    }
+
+    .form-section {
+      margin-bottom: 28px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .contact-info {
+      color: #666;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* Payment Method */
+    .payment-method {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .payment-details {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .card-icon {
+      width: 36px;
+      height: 24px;
+      background: linear-gradient(135deg, #1a1f71 0%, #1a1f71 100%);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      font-style: italic;
+    }
+
+    .card-info {
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .card-number {
+      font-weight: 500;
+    }
+
+    .card-expiry {
+      color: #666;
+    }
+
+    .edit-btn {
+      padding: 10px 20px;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      background: white;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .edit-btn:hover {
+      border-color: #1a1a1a;
+    }
+
+    /* Security Code */
+    .security-label {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .cvv-input-wrapper {
+      position: relative;
+      width: 200px;
+    }
+
+    .cvv-input {
+      width: 100%;
+      padding: 14px 50px 14px 16px;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .cvv-input:focus {
+      border-color: #1a1a1a;
+    }
+
+    .cvv-input::placeholder {
+      color: #999;
+    }
+
+    .cvv-icon {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+    }
+
+    /* Terms */
+    .terms-text {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .terms-text a {
+      color: #1a1a1a;
+      text-decoration: underline;
+    }
+
+    /* Pay Button */
+    .pay-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 32px;
+      background: #1a8f41;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .pay-btn:hover {
+      background: #167a38;
+    }
+
+    .pay-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Right Column - Order Summary */
+    .order-summary {
+      width: 360px;
+      flex-shrink: 0;
+    }
+
+    .event-image {
+      width: 100%;
+      height: 200px;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .event-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .image-dots {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+    }
+
+    .image-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .image-dot.active {
+      background: white;
+    }
+
+    .event-name {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .event-date {
+      font-size: 15px;
+      color: #666;
+      margin-bottom: 2px;
+    }
+
+    .event-venue {
+      font-size: 15px;
+      color: #666;
+      margin-bottom: 16px;
+    }
+
+    /* Deal Badge */
+    .deal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+
+    .deal-number {
+      background: #2d5a27;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .deal-text {
+      color: #2d5a27;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* Price Breakdown */
+    .price-breakdown {
+      border-top: 1px solid #e5e5e5;
+      padding-top: 16px;
+      margin-bottom: 16px;
+    }
+
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      font-size: 15px;
+    }
+
+    .price-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #1a1a1a;
+    }
+
+    .price-label svg {
+      width: 16px;
+      height: 16px;
+      color: #999;
+    }
+
+    .price-value {
+      color: #1a1a1a;
+    }
+
+    .price-multiplier {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .promo-link {
+      color: #1a1a1a;
+      font-size: 14px;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 8px 0;
+      display: inline-block;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      border-top: 1px solid #e5e5e5;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    /* Order Features */
+    .order-features {
+      margin-top: 24px;
+      border-top: 1px solid #e5e5e5;
+      padding-top: 20px;
+    }
+
+    .feature-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+    }
+
+    .feature-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1a1a1a;
+      flex-shrink: 0;
+    }
+
+    .feature-content {
+      flex: 1;
+    }
+
+    .feature-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .feature-description {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    .feature-description a {
+      color: #1a1a1a;
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .checkout-main {
+        flex-direction: column-reverse;
+        padding: 24px 16px;
+        gap: 32px;
+      }
+
+      .checkout-form {
+        max-width: 100%;
+      }
+
+      .order-summary {
+        width: 100%;
+      }
+
+      .form-title {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="checkout-header">
+    <div class="header-left">
+      <button class="back-btn" onclick="window.location.href='index.html'">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <span class="header-title">Checkout</span>
+    </div>
+    <div class="header-right">
+      <div class="currency-selector">
+        <div class="currency-flag"></div>
+        <span>USD</span>
+      </div>
+      <div class="user-avatar">J</div>
+    </div>
+  </header>
+
+  <!-- Protection Banner -->
+  <div class="protection-banner">
+    <svg class="protection-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 12l2 2 4-4"></path>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+    </svg>
+    <span class="protection-text">Every ticket protected</span>
+    <span class="protection-link">Learn more</span>
+  </div>
+
+  <!-- Main Content -->
+  <main class="checkout-main">
+    <!-- Left Column - Form -->
+    <div class="checkout-form">
+      <h1 class="form-title">Review your order</h1>
+
+      <!-- Contact Section -->
+      <div class="form-section">
+        <h2 class="section-title">Contact</h2>
+        <div class="contact-info">
+          <div id="contact-email">customer@email.com</div>
+          <div id="contact-phone">(555) 123-4567</div>
+        </div>
+      </div>
+
+      <!-- Payment Method Section -->
+      <div class="form-section">
+        <h2 class="section-title">Payment method</h2>
+        <div class="payment-method">
+          <div class="payment-details">
+            <div class="card-icon">VISA</div>
+            <div class="card-info">
+              <div class="card-number">Visa ending 1234</div>
+              <div class="card-expiry">12/28 - John Doe</div>
+            </div>
+          </div>
+          <button class="edit-btn">Edit</button>
+        </div>
+      </div>
+
+      <!-- Security Code Section -->
+      <div class="form-section">
+        <div class="security-label">Security code</div>
+        <div class="cvv-input-wrapper">
+          <input type="password" class="cvv-input" placeholder="CVV" maxlength="4">
+          <svg class="cvv-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+            <line x1="1" y1="10" x2="23" y2="10"></line>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Terms -->
+      <p class="terms-text">
+        By clicking the "Pay" button below, you agree to our <a href="#">Terms of Use</a>, and acknowledge having read our <a href="#">Privacy Notice</a>.
+      </p>
+
+      <!-- Pay Button -->
+      <button class="pay-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 12l2 2 4-4"></path>
+          <circle cx="12" cy="12" r="10"></circle>
+        </svg>
+        Pay now
+      </button>
+    </div>
+
+    <!-- Right Column - Order Summary -->
+    <div class="order-summary">
+      <div class="event-image">
+        <img src="bts.jpg" alt="BTS Concert">
+        <div class="image-dots">
+          <div class="image-dot active"></div>
+          <div class="image-dot"></div>
+          <div class="image-dot"></div>
+        </div>
+      </div>
+
+      <h2 class="event-name" id="event-name">BTS World Tour 'Arirang'</h2>
+      <div class="event-date" id="event-date">Sat Aug 15 at 8:00pm</div>
+      <div class="event-venue" id="event-venue">AT&T Stadium, Arlington, TX</div>
+
+      <div class="deal-badge">
+        <span class="deal-number" id="deal-rating">10</span>
+        <span class="deal-text">Amazing Deal</span>
+      </div>
+
+      <!-- Price Breakdown -->
+      <div class="price-breakdown">
+        <div class="price-row">
+          <span class="price-label">
+            Tickets
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </span>
+          <span class="price-value">
+            <span id="ticket-price">$103.00</span>
+            <span class="price-multiplier" id="ticket-multiplier">x 3</span>
+          </span>
+        </div>
+        <div class="price-row">
+          <span class="price-label">Fees</span>
+          <span class="price-value">
+            <span id="fees-price">$25.00</span>
+            <span class="price-multiplier" id="fees-multiplier">x 3</span>
+          </span>
+        </div>
+        <div class="price-row">
+          <span class="price-label">Tax</span>
+          <span class="price-value" id="tax-price">$7.57</span>
+        </div>
+        <a class="promo-link">Add promo code</a>
+      </div>
+
+      <div class="total-row">
+        <span>Total</span>
+        <span id="total-price">$391.57</span>
+      </div>
+
+      <!-- Order Features -->
+      <div class="order-features">
+        <div class="feature-item">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="9" rx="1"></rect>
+              <rect x="14" y="3" width="7" height="9" rx="1"></rect>
+              <path d="M10 6h4"></path>
+              <path d="M3 17h18"></path>
+              <path d="M3 21h18"></path>
+            </svg>
+          </div>
+          <div class="feature-content">
+            <div class="feature-title" id="section-info">Section 434, Row AA3</div>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <div class="feature-content">
+            <div class="feature-title">Instant delivery tickets</div>
+            <div class="feature-description">Tickets will be available within minutes of your purchase.</div>
+          </div>
+        </div>
+
+        <div class="feature-item" id="aisle-feature">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 3H6a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h4M10 3v18M10 12h4"></path>
+            </svg>
+          </div>
+          <div class="feature-content">
+            <div class="feature-title">Aisle</div>
+            <div class="feature-description">Aisle only guaranteed when purchasing the entire set of seats shown on map.</div>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a8f41" stroke-width="2">
+              <path d="M9 12l2 2 4-4"></path>
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <div class="feature-content">
+            <div class="feature-title">Every ticket protected</div>
+            <div class="feature-description">If something comes up with your event, we've got you covered. <a href="#">Learn More</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Get order data from URL parameters or localStorage
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      // Get data from URL params
+      const section = urlParams.get('section') || 'Section 434';
+      const row = urlParams.get('row') || 'Row AA3';
+      const price = parseFloat(urlParams.get('price')) || 103;
+      const quantity = parseInt(urlParams.get('quantity')) || 3;
+      const rating = urlParams.get('rating') || '10';
+      const hasAisle = urlParams.get('aisle') === 'true';
+
+      // Calculate prices
+      const ticketTotal = price * quantity;
+      const feesPerTicket = Math.round(price * 0.25);
+      const feesTotal = feesPerTicket * quantity;
+      const tax = Math.round((ticketTotal + feesTotal) * 0.02 * 100) / 100;
+      const total = ticketTotal + feesTotal + tax;
+
+      // Update UI
+      document.getElementById('section-info').textContent = `${section}, ${row}`;
+      document.getElementById('ticket-price').textContent = `$${price.toFixed(2)}`;
+      document.getElementById('ticket-multiplier').textContent = `x ${quantity}`;
+      document.getElementById('fees-price').textContent = `$${feesPerTicket.toFixed(2)}`;
+      document.getElementById('fees-multiplier').textContent = `x ${quantity}`;
+      document.getElementById('tax-price').textContent = `$${tax.toFixed(2)}`;
+      document.getElementById('total-price').textContent = `$${total.toFixed(2)}`;
+      document.getElementById('deal-rating').textContent = rating;
+
+      // Show/hide aisle feature
+      if (!hasAisle) {
+        document.getElementById('aisle-feature').style.display = 'none';
+      }
+    });
+
+    // Pay button click handler
+    document.querySelector('.pay-btn').addEventListener('click', function() {
+      const cvv = document.querySelector('.cvv-input').value;
+      if (!cvv || cvv.length < 3) {
+        alert('Please enter a valid CVV');
+        return;
+      }
+      alert('Payment successful! Your tickets have been purchased.');
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

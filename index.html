@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BTS World Tour 'Arirang' - AT&T Stadium | Tickets</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="event-info-dropdown">
+        <img src="bts.jpg" alt="BTS" class="event-thumbnail">
+        <div class="event-details">
+          <div class="event-title">BTS WORLD TOUR 'ARIRANG' IN ARLINGTON</div>
+          <div class="event-subtitle">Sat Aug 15 at 8:00pm - AT&T Stadium, Arlington, TX</div>
+        </div>
+        <span class="dropdown-arrow">&#9662;</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="header-btn">Sell</button>
+      <button class="header-btn icon-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+      </button>
+      <button class="header-btn icon-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </button>
+      <button class="header-btn icon-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Left Panel - Listings -->
+    <aside class="listings-panel">
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <button class="filter-btn icon-filter">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+          </svg>
+        </button>
+        <button class="filter-btn">Viewed</button>
+        <button class="filter-btn active" id="quantity-btn">
+          <span id="quantity-display">2 tickets</span>
+        </button>
+        <button class="filter-btn" id="price-btn">
+          Price <span class="filter-tag">Incl. fees</span>
+        </button>
+        <button class="filter-btn" id="perks-btn">Seat Perks</button>
+        <div class="filter-nav">
+          <button class="nav-btn" id="filter-nav-left">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <button class="nav-btn" id="filter-nav-right">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Price Info Banner -->
+      <div class="price-banner">
+        <span class="price-icon">$</span>
+        <span>The price you see includes all fees</span>
+      </div>
+
+      <!-- Listings Header -->
+      <div class="listings-header">
+        <span id="listings-count">1,615 listings</span>
+        <div class="sort-dropdown">
+          <span>Top picks</span>
+          <span class="dropdown-arrow">&#9662;</span>
+        </div>
+      </div>
+
+      <!-- Listings Container -->
+      <div class="listings-container" id="listings-container">
+        <!-- Listings will be populated by JavaScript -->
+      </div>
+    </aside>
+
+    <!-- Right Panel - Map -->
+    <section class="map-panel">
+      <div class="map-container" id="map-container">
+        <!-- SVG map will be loaded here -->
+      </div>
+      <div class="map-controls">
+        <button class="zoom-btn" id="zoom-in">+</button>
+        <button class="zoom-btn" id="zoom-out">-</button>
+      </div>
+      <div class="zoom-hint" id="zoom-hint">
+        <span>Double-click a section to zoom in</span>
+      </div>
+      <div class="zoom-level" id="zoom-level">1.0x</div>
+    </section>
+  </main>
+
+  <!-- Ticket Quantity Modal -->
+  <div class="modal-overlay" id="quantity-modal">
+    <div class="modal-content">
+      <h2 class="modal-title">How many tickets?</h2>
+      <div class="quantity-grid">
+        <button class="quantity-option" data-qty="1">1</button>
+        <button class="quantity-option selected" data-qty="2">2</button>
+        <button class="quantity-option" data-qty="3">3</button>
+        <button class="quantity-option" data-qty="4">4</button>
+        <button class="quantity-option" data-qty="5">5</button>
+        <button class="quantity-option" data-qty="6">6+</button>
+      </div>
+      <div class="modal-footer">
+        <span>You'll be seated together</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Price Filter Modal -->
+  <div class="filter-modal" id="price-modal">
+    <div class="filter-modal-content">
+      <div class="price-histogram" id="price-histogram">
+        <!-- Histogram bars will be generated -->
+      </div>
+      <div class="price-range-slider">
+        <input type="range" id="price-min" min="0" max="5000" value="0">
+        <input type="range" id="price-max" min="0" max="5000" value="5000">
+      </div>
+      <div class="price-inputs">
+        <div class="price-input-group">
+          <label>Minimum</label>
+          <span id="min-price-display">$153</span>
+        </div>
+        <div class="price-input-group">
+          <label>Maximum</label>
+          <span id="max-price-display">$2,728</span>
+        </div>
+      </div>
+      <div class="price-toggle">
+        <span>Show prices including fees</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="include-fees" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="filter-actions">
+        <button class="filter-action-btn clear">Clear</button>
+        <button class="filter-action-btn apply">View listings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seat Perks Modal -->
+  <div class="filter-modal" id="perks-modal">
+    <div class="filter-modal-content">
+      <label class="perk-option">
+        <div class="perk-info">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span>Aisle</span>
+        </div>
+        <input type="checkbox" class="perk-checkbox" data-perk="aisle">
+      </label>
+      <label class="perk-option">
+        <div class="perk-info">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+          <span>Front row</span>
+        </div>
+        <input type="checkbox" class="perk-checkbox" data-perk="front-row">
+      </label>
+      <div class="filter-actions">
+        <button class="filter-action-btn clear">Clear</button>
+        <button class="filter-action-btn apply">View listings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Listing Detail Panel (slides in from left) -->
+  <div class="listing-detail-panel" id="listing-detail">
+    <div class="listing-detail-header">
+      <button class="back-btn" id="back-to-listings">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </button>
+    </div>
+    <div class="listing-view-image">
+      <img src="bts.jpg" alt="View from section" id="listing-view-img">
+    </div>
+
+    <div class="listing-detail-content">
+      <!-- Rating Badge -->
+      <div class="listing-rating-badge" id="listing-rating-badge">
+        <span class="rating-number">10</span>
+        <span class="rating-text">Amazing</span>
+      </div>
+
+      <!-- Section/Row Info -->
+      <h2 class="listing-title" id="listing-title">Section 304, Row B</h2>
+      <div class="listing-price-info">
+        <span class="listing-detail-price" id="listing-detail-price">$169</span>
+        <span class="listing-price-label">each incl. fees</span>
+      </div>
+      <div class="affirm-line">As low as <span id="affirm-price">$46</span> / month or interest-free with <strong>affirm</strong> <a href="#">See if you qualify</a></div>
+
+      <!-- Ticket Selector & Continue -->
+      <div class="listing-actions">
+        <div class="ticket-selector" id="ticket-selector">
+          <span id="ticket-count">3 Tickets</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+        <button class="continue-btn" id="continue-btn">Continue</button>
+      </div>
+
+      <!-- Deal Banner -->
+      <div class="deal-banner" id="deal-banner">
+        <div class="deal-text">
+          <div class="deal-title">This is an amazing deal</div>
+          <div class="deal-description">These tickets are in the top 12% of listings for this event based on factors like price, location, view, and more.</div>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div class="listing-features">
+        <div class="feature-item">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <div class="feature-content">
+            <div class="feature-title">Instant delivery tickets</div>
+            <div class="feature-description">Tickets will be available within minutes of your purchase.</div>
+          </div>
+        </div>
+
+        <div class="feature-item" id="feature-aisle" style="display: none;">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <rect x="3" y="3" width="7" height="9" rx="1"></rect>
+              <rect x="14" y="3" width="7" height="9" rx="1"></rect>
+              <path d="M10 6h4"></path>
+              <path d="M3 17h18"></path>
+              <path d="M3 21h18"></path>
+            </svg>
+          </div>
+          <div class="feature-content">
+            <div class="feature-title">Aisle</div>
+            <div class="feature-description">Aisle only guaranteed when purchasing the entire set of seats shown on map.</div>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M9 12l2 2 4-4"></path>
+              <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c1.5 0 2.91.37 4.15 1.02"></path>
+            </svg>
+          </div>
+          <div class="feature-content">
+            <div class="feature-title">Every ticket protected</div>
+            <div class="feature-description">If something comes up with your event, we've got you covered. <a href="#">Learn More</a></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Similar Listings -->
+      <div class="similar-listings">
+        <div class="similar-listings-header">
+          <h3>Similar Listings</h3>
+          <div class="similar-nav">
+            <button class="similar-nav-btn" id="similar-prev">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="similar-nav-btn" id="similar-next">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="similar-listings-grid" id="similar-listings-grid">
+          <!-- Similar listings will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tooltip -->
+  <div class="map-tooltip" id="map-tooltip">
+    <div class="tooltip-section"></div>
+    <div class="tooltip-price"></div>
+    <div class="tooltip-perks"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
