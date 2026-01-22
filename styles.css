@@ -411,6 +411,10 @@ body {
   align-items: center;
   justify-content: center;
   background: #ffffff;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .map-container:active {

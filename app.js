@@ -1256,6 +1256,7 @@ function setupMapInteraction(svg) {
     // Don't start pan on section paths or seats
     if (e.target.classList.contains('section-path') || e.target.classList.contains('seat-circle')) return;
 
+    e.preventDefault(); // Prevent text selection while dragging
     isPanning = true;
     hasMoved = false;
     panStartMouse = { x: e.clientX, y: e.clientY };
@@ -1268,7 +1269,7 @@ function setupMapInteraction(svg) {
     if (!isPanning) return;
     hasMoved = true;
     // Scale pan speed based on zoom level - faster panning when zoomed in
-    const panSpeed = Math.max(2.5, state.zoom * 2);
+    const panSpeed = Math.max(4, state.zoom * 3);
     const deltaX = e.clientX - panStartMouse.x;
     const deltaY = e.clientY - panStartMouse.y;
     state.pan.x = panStartState.x + deltaX * panSpeed;
