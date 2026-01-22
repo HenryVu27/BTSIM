@@ -1503,6 +1503,47 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* Mobile View Toggle */
+.mobile-view-toggle {
+  display: none;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: white;
+  border-top: 1px solid #e5e5e5;
+  z-index: 100;
+  padding: 8px 16px;
+  gap: 8px;
+}
+
+.view-toggle-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-toggle-btn.active {
+  background: #1a1a1a;
+  color: white;
+}
+
+.view-toggle-btn svg {
+  flex-shrink: 0;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .listings-panel,
@@ -1514,19 +1555,65 @@ body {
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
+    position: relative;
+    height: calc(100vh - 60px);
+    border-radius: 16px 16px 0 0;
   }
 
   .listings-panel {
+    position: absolute;
     width: 100%;
-    height: 50vh;
+    height: calc(100% - 60px);
+    border-radius: 16px 16px 0 0;
+    box-shadow: none;
+    z-index: 10;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  .listings-panel.hidden {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
   }
 
   .map-panel {
-    height: 50vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 60px;
+    height: auto;
+    z-index: 5;
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  .map-panel.visible {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: all;
   }
 
   .listing-detail-panel {
     width: 100%;
+  }
+
+  .mobile-view-toggle {
+    display: flex;
+  }
+
+  .map-controls {
+    bottom: 20px;
+  }
+
+  .zoom-hint {
+    bottom: 80px;
+  }
+
+  .zoom-level {
+    bottom: 20px;
   }
 }
 
@@ -1638,6 +1725,29 @@ body {
 }
 
 @media (max-width: 768px) {
+  .header {
+    padding: 8px 12px;
+    height: 60px;
+  }
+
+  .event-thumbnail {
+    width: 36px;
+    height: 36px;
+  }
+
+  .event-title {
+    font-size: 12px;
+  }
+
+  .event-subtitle {
+    font-size: 10px;
+  }
+
+  .header-btn {
+    padding: 8px;
+    font-size: 12px;
+  }
+
   .simulator-banner {
     padding: 12px 16px;
   }

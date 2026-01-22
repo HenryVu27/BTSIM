@@ -1176,6 +1176,11 @@ async function loadSVGMap() {
       setupSectionInteraction(svg);
       colorCodeSections(svg);
 
+      // Setup touch support for mobile
+      if (typeof setupTouchSupport === 'function') {
+        setupTouchSupport(mapContainer);
+      }
+
       // Price labels disabled for debugging hover issues
       // setTimeout(() => {
       //   createPriceLabels(svg);
@@ -2259,10 +2264,94 @@ function showToast(message) {
   }, 3000);
 }
 
+// Mobile view toggle
+function setupMobileViewToggle() {
+  const toggle = document.getElementById('mobile-view-toggle');
+  const listingsPanel = document.querySelector('.listings-panel');
+  const mapPanel = document.querySelector('.map-panel');
+  const buttons = toggle?.querySelectorAll('.view-toggle-btn');
+
+  if (!toggle || !buttons) return;
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const view = btn.dataset.view;
+
+      // Update button states
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Toggle views
+      if (view === 'list') {
+        listingsPanel.classList.remove('hidden');
+        mapPanel.classList.remove('visible');
+      } else {
+        listingsPanel.classList.add('hidden');
+        mapPanel.classList.add('visible');
+      }
+    });
+  });
+}
+
+// Touch support for mobile map panning
+function setupTouchSupport(mapContainer) {
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchStartPanX = 0;
+  let touchStartPanY = 0;
+  let initialDistance = 0;
+  let initialZoom = 1;
+
+  mapContainer.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      // Single touch - pan
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartPanX = state.pan.x;
+      touchStartPanY = state.pan.y;
+    } else if (e.touches.length === 2) {
+      // Two touches - pinch to zoom
+      initialDistance = Math.hypot(
+        e.touches[1].clientX - e.touches[0].clientX,
+        e.touches[1].clientY - e.touches[0].clientY
+      );
+      initialZoom = state.zoom;
+    }
+  }, { passive: true });
+
+  mapContainer.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+
+    if (e.touches.length === 1) {
+      // Pan
+      const deltaX = e.touches[0].clientX - touchStartX;
+      const deltaY = e.touches[0].clientY - touchStartY;
+      const panSpeed = Math.max(3, state.zoom * 2);
+      state.pan.x = touchStartPanX + deltaX * panSpeed;
+      state.pan.y = touchStartPanY + deltaY * panSpeed;
+      if (window.updateMapTransform) {
+        window.updateMapTransform(false);
+      }
+    } else if (e.touches.length === 2) {
+      // Pinch zoom
+      const currentDistance = Math.hypot(
+        e.touches[1].clientX - e.touches[0].clientX,
+        e.touches[1].clientY - e.touches[0].clientY
+      );
+      const scale = currentDistance / initialDistance;
+      state.zoom = Math.min(Math.max(initialZoom * scale, 0.5), 6);
+      if (window.updateMapTransform) {
+        window.updateMapTransform(false);
+      }
+    }
+  }, { passive: false });
+}
+
 // Start the app
 document.addEventListener('DOMContentLoaded', () => {
   init();
   setupShareButtons();
+  setupMobileViewToggle();
 });
 
 // Also try to start if DOM is already loaded
@@ -2270,5 +2359,6 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
   setTimeout(() => {
     init();
     setupShareButtons();
+    setupMobileViewToggle();
   }, 100);
 }
