@@ -648,7 +648,7 @@ function generateSectionData(sectionId) {
 
   return {
     id: sectionId,
-    name: `Section ${sectionId}`,
+    name: `Section ${sectionId.replace(/^C/, '')}`,
     level,
     rows,
     basePrice,
